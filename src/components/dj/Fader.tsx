@@ -9,6 +9,7 @@ interface FaderProps {
   marks?: boolean;
   knobColor?: string;
   label?: string;
+  vu?: boolean;
 }
 
 // Hardware-style fader: recessed dark channel with tick marks and a tall
@@ -22,6 +23,7 @@ export function Fader({
   marks = true,
   knobColor = "var(--switch-thumb)",
   label = "Fader",
+  vu = false,
 }: FaderProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isV = orientation === "v";
@@ -88,7 +90,9 @@ export function Fader({
           ))}
         </div>
       )}
-      <div style={railStyle} />
+      <div style={vu ? { ...railStyle, width: isV ? 8 : width, height: isV ? height : 8, background: `linear-gradient(${isV ? "to top" : "to right"}, var(--vu-fill) ${value * 100}%, var(--fader-line) ${value * 100}%)`, position: "relative", overflow: "hidden" } : railStyle}>
+        {vu && <div className="absolute inset-0" style={{ background: `linear-gradient(${isV ? "to top" : "to right"}, #22c55e 0%, #84cc16 40%, #eab308 62%, #f97316 80%, #ef4444 100%)`, clipPath: isV ? `inset(${(1 - value) * 100}% 0 0 0)` : `inset(0 ${(1 - value) * 100}% 0 0)`, filter: "saturate(1.1)" }} />}
+      </div>
       <div
         className="absolute grid place-items-center backdrop-blur-2xl"
         style={{

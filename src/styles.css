@@ -77,11 +77,12 @@
   --ring: oklch(0.5 0.05 250);
 
   /* DJ accents */
-  --accent-orange: #ff8a3b;
+  --accent-orange: #d8dee9;
   --accent-blue: #3bd2ff;
   --accent-red: #ff3b3b;
   --accent-green: #3bff8a;
-  --knob-accent: #ff8a3b;
+  --knob-accent: #d8dee9;
+  --vu-fill: transparent;
   --meter-low: oklch(0.76 0.2 145);
   --meter-mid: oklch(0.86 0.18 92);
   --meter-high: oklch(0.66 0.24 28);

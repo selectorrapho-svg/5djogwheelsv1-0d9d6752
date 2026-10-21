@@ -18,9 +18,9 @@ import { Play, Music, Sliders, Activity, Grid3x3, X, Repeat, Disc3, ChevronLeft,
 import { SyncButton } from "./SyncButton";
 import { TrackLibraryOverlay } from "./TrackLibraryOverlay";
 import { Button } from "@/components/ui/button";
-import brandLogo from "@/assets/djogwheels-user-logo-cropped.png";
+import brandLogo from "@/assets/mix4deejays-logo-transparent.png";
 import { useState, useRef, useEffect } from "react";
-import { DeckSlider } from "./DeckSlider";
+import { PitchMenu } from "./PitchMenu";
 import { PreCueButton } from "./PreCueButton";
 import { ScratchDnaPanel } from "./ScratchDnaPanel";
 import { MixerView } from "./CenterColumn";
@@ -41,11 +41,11 @@ function MiniDeckHeader({ deck, side, onLibrary }: { deck: Deck; side: "left" | 
   return (
     <button
       onClick={onLibrary}
-      className="flex items-center gap-2 px-2 py-1 min-w-0 flex-1 text-left"
+      className="flex items-center gap-2 px-2 py-1 min-w-0 flex-1 text-left rounded-xl border border-border/40 bg-background/20 backdrop-blur-md shadow-sm"
       aria-label={`Load track on deck ${deck.id}`}
     >
-      <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center border border-border bg-secondary">
-        {deck.coverUrl ? <img src={deck.coverUrl} alt="" onError={e => { e.currentTarget.style.display = "none"; }} className="size-full rounded-full object-cover" /> : <Music className="w-3.5 h-3.5" style={{ color: accent }} />}
+      <div className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center border border-border bg-secondary">
+        {deck.coverUrl ? <img src={deck.coverUrl} alt="" onError={e => { e.currentTarget.style.display = "none"; }} className="size-full rounded-lg object-cover" /> : <Music className="w-3.5 h-3.5" style={{ color: accent }} />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-[9px] uppercase tracking-widest" style={{ color: accent }}>Deck {deck.id}</div>
@@ -138,7 +138,7 @@ export function PortraitLayout({
   return (
     <div className="fixed inset-0 bg-background text-foreground flex flex-col overflow-hidden select-none">
       <div data-dj-topbar className="flex items-center justify-between h-11 shrink-0 gap-2 border-b border-border px-3">
-        <img src={brandLogo} alt="djogwheels PRO" className="h-9 w-28 object-contain" />
+        <img src={brandLogo} alt="mix4deejays" className="topbar-logo h-7 w-28 object-contain" />
         <div className="flex items-center gap-2"><WaveformOptions topVisible={topVisible} onTopVisible={setTopVisible} /><Button variant="ghost" size="icon" onClick={() => setLibraryDeck(deckLeft)} title="Library" aria-label="Open library"><Library /></Button><SettingsPanel mode={mode} setMode={setMode} onAutomix={onAutomix} /><ThemeToggle /></div>
       </div>
       {topVisible && <TopWaveforms decks={[deckLeft, deckRight]} />}
@@ -156,8 +156,8 @@ export function PortraitLayout({
         {mainView === "mixer" && mode !== "video" && <MixerView deckA={deckLeft} deckB={deckRight} />}
          {mainView === "wave" && <div className="absolute right-2 top-2 z-20"><WaveformOptions /></div>}
         {mainView === "decks" && <div className="grid grid-cols-2 h-full items-center justify-items-center overflow-hidden gap-1 px-1">
-          <div className="flex min-w-0 items-center gap-1"><DeckSlider deck={deckLeft} height={110} pitchOnly /><JogWheel deck={deckLeft} size={jogSize} accent="var(--accent-orange)" /></div>
-          <div className="flex min-w-0 items-center gap-1"><JogWheel deck={deckRight} size={jogSize} accent="var(--accent-blue)" /><DeckSlider deck={deckRight} height={110} pitchOnly /></div>
+          <div className="flex min-w-0 items-center gap-1"><PitchMenu deck={deckLeft} /><JogWheel deck={deckLeft} size={jogSize} accent="var(--accent-orange)" /></div>
+          <div className="flex min-w-0 items-center gap-1"><JogWheel deck={deckRight} size={jogSize} accent="var(--accent-blue)" /><PitchMenu deck={deckRight} /></div>
         </div>}
         {mainView === "wave" && (vertical ? (
           <div className="flex-1 min-h-0 flex gap-1">
