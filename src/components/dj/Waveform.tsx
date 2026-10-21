@@ -103,7 +103,7 @@ export function Waveform({ deck, side }: Props) {
           }
           ctx.closePath();
           ctx.fillStyle = col;
-          ctx.globalAlpha = 0.85;
+          ctx.globalAlpha = 0.95;
           ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -144,8 +144,10 @@ export function Waveform({ deck, side }: Props) {
       }
 
       // playhead
-      ctx.fillStyle = "#ff3b3b";
+      ctx.save(); ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 10;
+      ctx.fillStyle = "#ff4d4d";
       ctx.fillRect(0, centerY - 1, W, 2);
+      ctx.restore();
 
       // hot cue triangles
       deck.hotCues.forEach((c, i) => {

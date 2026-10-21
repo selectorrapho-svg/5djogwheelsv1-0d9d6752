@@ -107,7 +107,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
         }
         ctx.closePath();
         ctx.fillStyle = col;
-        ctx.globalAlpha = 0.85;
+        ctx.globalAlpha = 0.95;
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -136,8 +136,10 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
       }
 
       // playhead
-      ctx.fillStyle = "#ff3b3b";
+      ctx.save(); ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 10;
+      ctx.fillStyle = "#ff4d4d";
       ctx.fillRect(W / 2 - 1, 0, 2, H);
+      ctx.restore();
 
       // hot cues
       deck.hotCues.forEach((c, i) => {
