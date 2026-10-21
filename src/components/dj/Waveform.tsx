@@ -192,7 +192,7 @@ export function Waveform({ deck, side }: Props) {
   });
 
   return (
-    <div className={`relative w-full h-full overflow-hidden bg-background ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
+    <div className={`relative w-full h-full overflow-hidden ${settings.waveBg === "light" ? "wave-surface-light" : "wave-surface-dark"} ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" /><WaveAnalysisStatus deck={deck} />
 
       <div className={`absolute ${side === "left" ? "right-1" : "left-1"} top-1 flex flex-col gap-1`}>
