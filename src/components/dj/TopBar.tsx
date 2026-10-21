@@ -62,7 +62,7 @@ export function TopBar({ deckA, deckB, center }: { deckA: Deck; deckB: Deck; cen
       <TopTrack deck={deckA} side="left" />
       <div className="shrink-0 flex items-center gap-1 px-1">
         {center}
-        <img src={logo.url} alt="mix4deejays" className="h-8 w-auto max-w-[96px] rounded-md object-contain" />
+        <img src={logo.url} alt="mix4deejays" className="h-10 w-28 rounded-md object-cover" />
       </div>
       <TopTrack deck={deckB} side="right" />
       <div className="shrink-0 pr-1"><WaveformOptions topVisible={topVisible} onTopVisible={setTopVisible} /></div>

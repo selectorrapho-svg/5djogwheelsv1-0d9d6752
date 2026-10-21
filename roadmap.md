@@ -132,3 +132,10 @@
 - [ ] Hide initial landscape waveforms; add view toggles, waveform dropdown settings and RGB frequency colours.
 - [ ] Add independently collapsible video deck previews retaining master output; verify crossfader interaction.
 - [ ] Download and review Mixxx as a reference; document native engine integration limits.
+
+## October 21 mixer upgrade
+- [x] Dark waveform background wired to the setting, glowing playhead, sharper fills.
+- [x] 8 performance pads (Hot Cue / Roll / Skip) at the bottom of each landscape deck.
+- [x] Mixer overview knob labels removed; Colour FX styles (Filter, Space, Echo, Crush, Jet, Sweep).
+- [x] Stems sliders replaced by 4 knobs with a Stems/EQ switch.
+- [x] Smaller top waveforms; mix4deejays logo centred in the top bar.
