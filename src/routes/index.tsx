@@ -89,12 +89,8 @@ function DjApp() {
           {mode === "video" ? (
             <div className="absolute inset-0 flex flex-col">
               <div className="relative" data-dj-topbar>
-                <TopBar deckA={decks.left} deckB={decks.right} />
+                <TopBar deckA={decks.left} deckB={decks.right} center={<><SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} /><ThemeToggle /></>} />
                 <div className="h-px bg-border" />
-                <div className="absolute left-1/2 -translate-x-1/2 top-1 flex items-center gap-1">
-                  <SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} />
-                  <ThemeToggle />
-                </div>
               </div>
               <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
                 <DeckPanel deck={decks.left} side="left" videoMode={mode === "video"} />
@@ -115,13 +111,8 @@ function DjApp() {
               <div className="absolute inset-0 bg-background/85" />
               <div className="relative flex flex-col h-full">
                 <div className="relative" data-dj-topbar>
-                  <TopBar deckA={decks.left} deckB={decks.right} />
+                  <TopBar deckA={decks.left} deckB={decks.right} center={<><SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} /><ThemeToggle /></>} />
                   <div className="h-px bg-border" />
-                  <div className="absolute left-1/2 -translate-x-1/2 top-1 flex items-center gap-1">
-                    
-                    <SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} />
-                    <ThemeToggle />
-                  </div>
                 </div>
                 <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
                   <DeckPanel deck={decks.left} side="left" />

@@ -10,6 +10,7 @@ import { Pause, Play, ChevronLeft, ChevronRight, ChevronDown, Repeat, Check } fr
 import { useState } from "react";
 import { VideoPreview } from "./VideoPreview";
 import { StemsPanel } from "./StemsPanel";
+import { DeckPads } from "./DeckPads";
 import { Button } from "@/components/ui/button";
 
 const LOOP_LENGTHS = ["1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8", "16", "32"];
@@ -186,13 +187,14 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
               stemsOpen ? "dj-glass-on" : "dj-glass"
             }`}
             style={{ color: accent }}
-            title="Stems sliders"
+            title="Stems / EQ knobs"
              aria-label={`Stems deck ${deck.id}`}
             aria-expanded={stemsOpen}
           >
             S
           </Button>
         </div>
+        {!compact && <DeckPads deck={deck} />}
         {stemsOpen && <StemsPanel deck={deck} accent={accent} onClose={() => setStemsOpen(false)} />}
 
 

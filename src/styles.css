@@ -476,3 +476,40 @@
 .cue-control-group > button:first-child { border-radius: 8px 0 0 8px; }
 .cue-control-group > button:last-child { border-radius: 0 8px 8px 0; }
 [data-jog-style="combatDark"] .jog-readout-bpm, [data-jog-style="combatLight"] .jog-readout-bpm { color: var(--control-blue); }
+
+/* ---- Waveform surfaces ---- */
+:root {
+  --wave-dark: radial-gradient(120% 90% at 50% 50%, #0d0f14 0%, #050608 70%, #000 100%);
+  --wave-light: linear-gradient(180deg, #f4f5f7, #e6e8ec);
+}
+.wave-surface-dark { background: var(--wave-dark); box-shadow: inset 0 0 24px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04); }
+.wave-surface-light { background: var(--wave-light); }
+
+/* ---- Performance pads ---- */
+.deck-pad {
+  height: 30px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+  color: var(--muted-foreground);
+  background: linear-gradient(180deg, #2a2d33, #16181c);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.6);
+  transition: transform .06s, box-shadow .12s, background .12s;
+  touch-action: none;
+}
+.deck-pad-lit {
+  color: #fff;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--pad-color) 55%, #1a1a1a), color-mix(in oklab, var(--pad-color) 25%, #0b0b0b));
+  border-color: color-mix(in oklab, var(--pad-color) 70%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 10px color-mix(in oklab, var(--pad-color) 45%, transparent);
+}
+.deck-pad:active { transform: scale(.95); box-shadow: 0 0 16px var(--pad-color), inset 0 0 8px rgba(255,255,255,.3); background: var(--pad-color); color: #000; }
+.deck-pad-mode { flex: 1; height: 18px; border-radius: 4px; font-size: 8px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-foreground); background: var(--glass); border: 1px solid var(--glass-border); }
+.deck-pad-mode-on { color: var(--foreground); background: var(--glass-strong); border-color: var(--control-blue, var(--accent-blue)); }
+
+/* ---- Colour FX ---- */
+.color-fx-chip { height: 20px; border-radius: 5px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); background: var(--glass); border: 1px solid var(--glass-border); }
+.color-fx-chip-on { color: #000; background: var(--fx-color); border-color: var(--fx-color); box-shadow: 0 0 10px color-mix(in oklab, var(--fx-color) 60%, transparent); }
+
+/* ---- Stem / EQ switch ---- */
+.stem-switch { display: flex; padding: 2px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-border); }
+.stem-switch button { padding: 0 10px; height: 20px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-foreground); }
+.stem-switch button[aria-pressed="true"] { color: var(--foreground); background: var(--glass-strong); box-shadow: var(--glass-shadow); }
