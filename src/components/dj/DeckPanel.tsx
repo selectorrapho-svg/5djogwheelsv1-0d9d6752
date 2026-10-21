@@ -186,7 +186,6 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
           >
             {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5 translate-x-px" fill="currentColor" />}
           </Button>
-          <span className="justify-self-center text-[10px] text-muted-foreground tabular-nums" aria-hidden="true"></span>
           <Button variant="ghost"
             onClick={() => setStemsOpen((o) => !o)}
             className={`shrink-0 rounded-full p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
