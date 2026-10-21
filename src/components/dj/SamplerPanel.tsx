@@ -156,7 +156,7 @@ export function SamplerPanel({
                 )}
               </div>
               <div className="flex flex-col items-center gap-1">
-                <Fader value={vol} onChange={setVol} orientation="v" height={112} width={30} />
+                <Fader vu value={vol} onChange={setVol} orientation="v" height={112} width={30} />
                 <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Vol</span>
               </div>
             </div>
