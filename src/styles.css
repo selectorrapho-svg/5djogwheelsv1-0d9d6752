@@ -273,7 +273,9 @@
 @media (orientation: landscape) and (max-height: 600px) {
   .landscape-jog-slot .reference-jog { width: min(280px, 51vh) !important; }
   .landscape-transport { border-top: 1px solid var(--border); padding-top: 5px; }
-  .landscape-transport > button { height: 40px; padding-inline: 2px; border-radius: 7px; }
+  .landscape-transport > button { height: 40px; padding-inline: 2px; border-radius: 999px; }
+  .landscape-transport > .transport-play, .landscape-transport > button:last-child { width: 40px; padding: 0; }
+  .landscape-transport > .cue-oval { border-radius: 16px; }
   .fx-drawer { border-radius: 7px; background: color-mix(in oklab, var(--secondary) 94%, transparent); }
   .fx-instant-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .fx-instant-grid .performance-pad { min-height: 30px; padding: 2px; }
@@ -303,7 +305,7 @@
 }
 
 @layer components {
-  .landscape-transport { grid-template-columns: 48px minmax(0,1fr) minmax(0,1fr) 40px; }
+  .landscape-transport { grid-template-columns: 44px minmax(0,1fr) 40px; }
   .landscape-transport .transport-play { width: 44px; height: 44px; border-radius: 50%; padding: 0; }
   .transport-playing { color: var(--accent-green); border-color: var(--accent-green); }
   .landscape-jog-slot { container-type: size; }
