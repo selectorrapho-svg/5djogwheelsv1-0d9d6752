@@ -157,6 +157,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
             aria-label={`${deck.playing ? "Pause" : "Play"} deck ${deck.id}`}
             className={`transport-play shrink-0 rounded-full p-0 flex items-center justify-center ${compact ? "size-10" : "size-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
             title="Play / Pause"
+            style={{ borderRadius: 9999, width: 44, height: 44 }}
           >
             {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5 translate-x-px" fill="currentColor" />}
           </Button>
@@ -169,7 +170,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
             onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
             onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
             className={`cue-oval shrink-0 rounded-2xl dj-glass uppercase tracking-widest font-bold ${compact ? "h-10 text-[10px]" : "h-11 text-[11px]"}`}
-            style={{ color: accent }}
+            style={{ color: accent, borderRadius: 16 }}
             aria-label={`Cue deck ${deck.id}`}
             title="Cue: tap to set, hold to preview"
           >
@@ -180,7 +181,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
             className={`shrink-0 rounded-full p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
               stemsOpen ? "dj-glass-on" : "dj-glass"
             }`}
-            style={{ color: accent }}
+            style={{ color: accent, borderRadius: 9999, width: 44, height: 44 }}
             title="Stems / EQ knobs"
              aria-label={`Stems deck ${deck.id}`}
             aria-expanded={stemsOpen}
