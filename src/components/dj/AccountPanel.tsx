@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
-import '@lovable.dev/cloud-auth-js/styles.css';
 import { useLicense, signUp, logIn, logOut, redeem, approve, parseRequest, whatsappPayUrl, requestCode, PRICE_KES } from '@/lib/dj/license';
 import { PRO_MONTHS } from '@/lib/dj/licenseRules';
 export function AccountPanel() {
@@ -24,7 +23,6 @@ export function AccountPanel() {
     </form>
     {mode === 'login' && <Button variant="ghost" disabled={busy || !email} onClick={() => void run(async () => { const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` }); if(error) throw error; }, 'If an account exists, check your email for a reset link.')}>Forgot password?</Button>}
     <Button variant="outline" className="w-full" disabled={busy} onClick={() => void run(async () => { const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin }); if(result.error) throw result.error; })}>Continue with Google</Button>
-    <Button className="lovable-auth-button w-full" disabled={busy} onClick={() => void run(async () => { const result = await lovable.auth.signInWithOAuth('lovable', { redirect_uri: window.location.origin }); if(result.error) throw result.error; })}>Continue with Lovable</Button>
     {msg && <p role="status" className="text-xs text-foreground">{msg}</p>}
   </div>;
   return <div className="space-y-3 text-sm">

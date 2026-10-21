@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Deck } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
+import { ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const PAD_COLORS = ["#ff3b3b", "#ff8a3b", "#ffd23b", "#3bff8a", "#3bd2ff", "#4d7bff", "#c04dff", "#ff4dd2"];
 const MODES = ["Hot Cue", "Roll", "Skip"] as const;
@@ -41,11 +43,17 @@ export function DeckPads({ deck }: { deck: Deck }) {
 
   return (
     <div className="deck-pads w-full shrink-0">
-      <div className="mb-1 flex items-center gap-1">
-        {MODES.map((m) => (
-          <button key={m} onClick={() => setMode(m)} aria-pressed={mode === m}
-            className={`deck-pad-mode ${mode === m ? "deck-pad-mode-on" : ""}`}>{m}</button>
-        ))}
+      <div className="mb-1 flex items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="deck-pad-mode" aria-label={`Pad mode deck ${deck.id}`}>
+            {mode}<ChevronDown className="size-3" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="rounded-2xl">
+            {MODES.map((m) => (
+              <DropdownMenuItem key={m} onSelect={() => setMode(m)} className={`rounded-full text-xs ${mode === m ? "text-primary" : ""}`}>{m}</DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="grid grid-cols-4 grid-rows-2 gap-1">
         {Array.from({ length: 8 }, (_, i) => {
