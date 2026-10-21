@@ -115,6 +115,31 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
                 ))}
               </div>
             )}
+            {/* compact Set / Cue pair — small so the jog keeps its size */}
+            <button
+              onClick={() => deck.setCue()}
+              className="ml-1 grid h-7 place-items-center rounded-lg px-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground"
+              style={{ border: "1px solid var(--glass-border)", background: "var(--glass)" }}
+              aria-label={`Set cue deck ${deck.id}`}
+              title="Set cue point at playhead"
+            >
+              Set
+            </button>
+            <button
+              onPointerDown={() => {
+                if (deck.playing) { deck.pause(); deck.seek(deck.cuePoint); return; }
+                if (Math.abs(deck.currentTime - deck.cuePoint) < 0.05) { previewing.current = true; deck.play(); return; }
+                deck.seek(deck.cuePoint);
+              }}
+              onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+              onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+              className="grid h-7 place-items-center rounded-lg px-2 text-[9px] font-bold uppercase tracking-widest"
+              style={{ border: "1px solid var(--glass-border)", background: "var(--glass)", color: accent }}
+              aria-label={`Cue deck ${deck.id}`}
+              title="Cue: return to cue, hold to preview"
+            >
+              Cue
+            </button>
           </div>
           <SyncButton
             onClick={() => {
@@ -161,21 +186,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
           >
             {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5 translate-x-px" fill="currentColor" />}
           </Button>
-          <Button variant="ghost"
-            onPointerDown={() => {
-              if (deck.playing) { deck.pause(); deck.seek(deck.cuePoint); return; }
-              if (Math.abs(deck.currentTime - deck.cuePoint) < 0.05) { previewing.current = true; deck.play(); return; }
-              deck.setCue();
-            }}
-            onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
-            onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
-            className={`cue-oval shrink-0 rounded-2xl dj-glass uppercase tracking-widest font-bold ${compact ? "h-10 text-[10px]" : "h-11 text-[11px]"}`}
-            style={{ color: accent, borderRadius: 16 }}
-            aria-label={`Cue deck ${deck.id}`}
-            title="Cue: tap to set, hold to preview"
-          >
-            Cue
-          </Button>
+          <span className="justify-self-center text-[10px] text-muted-foreground tabular-nums" aria-hidden="true"></span>
           <Button variant="ghost"
             onClick={() => setStemsOpen((o) => !o)}
             className={`shrink-0 rounded-full p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
