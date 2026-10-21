@@ -176,7 +176,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
         )}
 
         {/* transport — stays inside the panel on small landscape screens */}
-        <div className="w-full shrink-0 grid grid-cols-[auto_1fr_auto] items-center gap-2 text-[10px] landscape-transport">
+        <div className="w-full shrink-0 grid grid-cols-[auto_auto] items-center justify-between gap-2 text-[10px] landscape-transport">
           <Button variant="ghost"
             onClick={() => deck.toggle()}
             aria-label={`${deck.playing ? "Pause" : "Play"} deck ${deck.id}`}
