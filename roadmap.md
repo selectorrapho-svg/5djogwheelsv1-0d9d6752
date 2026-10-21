@@ -139,4 +139,4 @@
 - [x] Mixer overview knob labels removed; Colour FX styles (Filter, Space, Echo, Crush, Jet, Sweep).
 - [x] Stems sliders replaced by 4 knobs with a Stems/EQ switch.
 - [x] Smaller top waveforms; mix4deejays logo centred in the top bar.
-- [ ] Move Colour FX from mixer overview into the deck FX panel.
+- [x] Move Colour FX from mixer overview into the deck FX panel.

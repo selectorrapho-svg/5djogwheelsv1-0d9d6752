@@ -42,7 +42,7 @@ export function DeckTools({ deck, accent, side }: { deck: Deck; accent: string; 
           <Sliders className="size-4" style={{ color: deck.activeFx ? accent : "var(--muted-foreground)" }} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent side={side === "left" ? "right" : "left"} align="center" className="w-60 rounded-3xl p-3" style={{ background: "var(--popover)", border: "1px solid var(--glass-border)", backdropFilter: "blur(24px)" }}>
+      <PopoverContent side={side === "left" ? "right" : "left"} align="center" className="w-60 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-3xl p-3" style={{ background: "var(--popover)", border: "1px solid var(--glass-border)", backdropFilter: "blur(24px)" }}>
         <button onClick={() => setBrowse(true)} className="flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-semibold uppercase tracking-wide" style={{ background: "var(--glass)", border: "1px solid var(--glass-border)" }}>
           <span className="min-w-0 truncate">{fxLabel(fx)}</span><ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </button>
