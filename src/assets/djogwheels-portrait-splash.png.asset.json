@@ -1,11 +1,11 @@
 {
-  "asset_id": "77d1e9de-cfc0-460c-b94a-885b60765cb6",
-  "content_type": "image/png",
-  "created_at": "2026-10-14T07:34:20Z",
+  "version": 1,
+  "asset_id": "fd59dafd-8fe4-4d3f-b1fc-6ca31d2924d1",
+  "project_id": "33af6b1f-a0f8-4bce-ac86-50221c2e1e70",
+  "url": "/__l5e/assets-v1/fd59dafd-8fe4-4d3f-b1fc-6ca31d2924d1/djogwheels-portrait-splash.png",
+  "r2_key": "a/v1/33af6b1f-a0f8-4bce-ac86-50221c2e1e70/fd59dafd-8fe4-4d3f-b1fc-6ca31d2924d1/djogwheels-portrait-splash.png",
   "original_filename": "djogwheels-portrait-splash.png",
-  "project_id": "7321b5f7-d824-4ed0-b42c-196ccd0b28af",
-  "r2_key": "a/v1/7321b5f7-d824-4ed0-b42c-196ccd0b28af/77d1e9de-cfc0-460c-b94a-885b60765cb6/djogwheels-portrait-splash.png",
   "size": 2011410,
-  "url": "/__l5e/assets-v1/77d1e9de-cfc0-460c-b94a-885b60765cb6/djogwheels-portrait-splash.png",
-  "version": 1
+  "content_type": "image/png",
+  "created_at": "2026-10-21T16:08:43Z"
 }
