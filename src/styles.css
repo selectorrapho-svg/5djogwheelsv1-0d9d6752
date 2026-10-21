@@ -273,7 +273,9 @@
 @media (orientation: landscape) and (max-height: 600px) {
   .landscape-jog-slot .reference-jog { width: min(280px, 51vh) !important; }
   .landscape-transport { border-top: 1px solid var(--border); padding-top: 5px; }
-  .landscape-transport > button { height: 40px; padding-inline: 2px; border-radius: 7px; }
+  .landscape-transport > button { height: 40px; padding-inline: 2px; border-radius: 999px; }
+  .landscape-transport > .transport-play, .landscape-transport > button:last-child { width: 40px; padding: 0; }
+  .landscape-transport > .cue-oval { border-radius: 16px; }
   .fx-drawer { border-radius: 7px; background: color-mix(in oklab, var(--secondary) 94%, transparent); }
   .fx-instant-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .fx-instant-grid .performance-pad { min-height: 30px; padding: 2px; }
@@ -303,7 +305,7 @@
 }
 
 @layer components {
-  .landscape-transport { grid-template-columns: 48px minmax(0,1fr) minmax(0,1fr) 40px; }
+  .landscape-transport { grid-template-columns: 44px minmax(0,1fr) 40px; }
   .landscape-transport .transport-play { width: 44px; height: 44px; border-radius: 50%; padding: 0; }
   .transport-playing { color: var(--accent-green); border-color: var(--accent-green); }
   .landscape-jog-slot { container-type: size; }
@@ -485,25 +487,24 @@
 .wave-surface-dark { background: var(--wave-dark); box-shadow: inset 0 0 24px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.04); }
 .wave-surface-light { background: var(--wave-light); }
 
-/* ---- Performance pads ---- */
+/* ---- Performance pads (flat) ---- */
 .deck-pad {
-  height: 30px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: .05em;
-  color: var(--muted-foreground);
-  background: linear-gradient(180deg, #2a2d33, #16181c);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.6);
-  transition: transform .06s, box-shadow .12s, background .12s;
-  touch-action: none;
+  height: 30px; border-radius: 8px; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+  color: var(--muted-foreground); background: #1c1e22;
+  border: 1px solid rgba(255,255,255,0.08); transition: transform .06s, background .12s; touch-action: none;
 }
-.deck-pad-lit {
-  color: #fff;
-  background: linear-gradient(180deg, color-mix(in oklab, var(--pad-color) 55%, #1a1a1a), color-mix(in oklab, var(--pad-color) 25%, #0b0b0b));
-  border-color: color-mix(in oklab, var(--pad-color) 70%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 0 10px color-mix(in oklab, var(--pad-color) 45%, transparent);
-}
-.deck-pad:active { transform: scale(.95); box-shadow: 0 0 16px var(--pad-color), inset 0 0 8px rgba(255,255,255,.3); background: var(--pad-color); color: #000; }
-.deck-pad-mode { flex: 1; height: 18px; border-radius: 4px; font-size: 8px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted-foreground); background: var(--glass); border: 1px solid var(--glass-border); }
-.deck-pad-mode-on { color: var(--foreground); background: var(--glass-strong); border-color: var(--control-blue, var(--accent-blue)); }
+.deck-pad-lit { color: #fff; background: color-mix(in oklab, var(--pad-color) 35%, #121212); border-color: var(--pad-color); }
+.deck-pad:active { transform: scale(.95); background: var(--pad-color); color: #000; }
+.deck-pad-mode { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 10px; border-radius: 999px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--foreground); background: var(--glass); border: 1px solid var(--glass-border); }
+.theme-gray .topbar-logo { filter: invert(1); }
+
+/* ---- Intro screens ---- */
+@keyframes pricing-drift { 0% { transform: scale(1.05) translate(0,0); } 50% { transform: scale(1.15) translate(-2%,-1%); } 100% { transform: scale(1.05) translate(0,0); } }
+@keyframes pricing-glow { 0%,100% { opacity: .35; } 50% { opacity: .7; } }
+.pricing-animated-bg { animation: pricing-drift 18s ease-in-out infinite; }
+.pricing-animated-glow { background: radial-gradient(60% 50% at 70% 70%, rgba(255,80,40,.35), transparent 70%); animation: pricing-glow 4s ease-in-out infinite; }
+@keyframes poster-in { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
+.poster-in { animation: poster-in .7s ease-out both; }
 
 /* ---- Colour FX ---- */
 .color-fx-chip { height: 20px; border-radius: 5px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); background: var(--glass); border: 1px solid var(--glass-border); }

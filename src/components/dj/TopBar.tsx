@@ -7,7 +7,7 @@ import { useState } from "react";
 import { TrackLibraryOverlay } from "./TrackLibraryOverlay";
 import { WaveformOptions } from "./WaveformOptions";
 import { TopWaveforms } from "./TopWaveforms";
-import logo from "@/assets/mix4deejays-logo.jpg.asset.json";
+import logo from "@/assets/mix4deejays-logo-transparent.png";
 import type { ReactNode } from "react";
 
 function TopTrack({ deck, side }: { deck: Deck; side: "left" | "right" }) {
@@ -62,7 +62,7 @@ export function TopBar({ deckA, deckB, center }: { deckA: Deck; deckB: Deck; cen
       <TopTrack deck={deckA} side="left" />
       <div className="shrink-0 flex items-center gap-1 px-1">
         {center}
-        <img src={logo.url} alt="mix4deejays" className="h-10 w-28 rounded-md object-cover" />
+        <img src={logo} alt="mix4deejays" className="topbar-logo h-5 w-auto max-w-[120px] object-contain" />
       </div>
       <TopTrack deck={deckB} side="right" />
       <div className="shrink-0 pr-1"><WaveformOptions topVisible={topVisible} onTopVisible={setTopVisible} /></div>

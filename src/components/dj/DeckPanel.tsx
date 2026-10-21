@@ -7,7 +7,7 @@ import { SyncButton } from "./SyncButton";
 import { PreCueButton } from "./PreCueButton";
 
 import { Pause, Play, ChevronLeft, ChevronRight, ChevronDown, Repeat, Check } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { VideoPreview } from "./VideoPreview";
 import { StemsPanel } from "./StemsPanel";
 import { DeckPads } from "./DeckPads";
@@ -29,6 +29,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
   const accent = side === "left" ? "#ff8a3b" : "#3bd2ff";
   const [showVideo, setShowVideo] = useState(true);
   const [stemsOpen, setStemsOpen] = useState(false);
+  const previewing = useRef(false);
   const [loopIdx, setLoopIdx] = useState(7); // default "4"
   const [loopMenuOpen, setLoopMenuOpen] = useState(false);
   const [loopMode, setLoopMode] = useState(LOOP_MODES[0]);
@@ -150,43 +151,37 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
         )}
 
         {/* transport — stays inside the panel on small landscape screens */}
-        <div className="w-full shrink-0 grid grid-cols-4 items-center gap-1 text-[10px] landscape-transport">
+        <div className="w-full shrink-0 grid grid-cols-[auto_1fr_auto] items-center gap-2 text-[10px] landscape-transport">
           <Button variant="ghost"
             onClick={() => deck.toggle()}
             aria-label={`${deck.playing ? "Pause" : "Play"} deck ${deck.id}`}
-            className={`transport-play shrink-0 rounded-full flex items-center justify-center ${compact ? "h-10" : "h-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
+            className={`transport-play shrink-0 rounded-full p-0 flex items-center justify-center ${compact ? "size-10" : "size-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
             title="Play / Pause"
+            style={{ borderRadius: 9999, width: 44, height: 44 }}
           >
-            {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5" fill="currentColor" />}
-          </Button>
-          <Button variant="ghost"
-            onClick={() => deck.setCue()}
-            className={`shrink-0 rounded-md dj-glass uppercase tracking-widest font-bold ${compact ? "px-1 h-10 text-[10px]" : "px-1 h-11 text-[11px]"}`}
-            title="Set cue point at current position"
-          >
-            Set
+            {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5 translate-x-px" fill="currentColor" />}
           </Button>
           <Button variant="ghost"
             onPointerDown={() => {
-              deck.seek(deck.cuePoint);
-              deck.play();
+              if (deck.playing) { deck.pause(); deck.seek(deck.cuePoint); return; }
+              if (Math.abs(deck.currentTime - deck.cuePoint) < 0.05) { previewing.current = true; deck.play(); return; }
+              deck.setCue();
             }}
-            onPointerUp={() => {
-              deck.pause();
-              deck.seek(deck.cuePoint);
-            }}
-            onPointerCancel={() => { deck.pause(); deck.seek(deck.cuePoint); }}
-            className={`shrink-0 rounded-md dj-glass flex items-center justify-center ${compact ? "h-10" : "h-11"}`}
-            title="Hold to preview from cue"
+            onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+            onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+            className={`cue-oval shrink-0 rounded-2xl dj-glass uppercase tracking-widest font-bold ${compact ? "h-10 text-[10px]" : "h-11 text-[11px]"}`}
+            style={{ color: accent, borderRadius: 16 }}
+            aria-label={`Cue deck ${deck.id}`}
+            title="Cue: tap to set, hold to preview"
           >
-            <Repeat className="w-4 h-4" style={{ color: accent }} />
+            Cue
           </Button>
           <Button variant="ghost"
             onClick={() => setStemsOpen((o) => !o)}
-            className={`shrink-0 rounded-xl flex items-center justify-center font-bold text-sm ${compact ? "h-10" : "h-11"} ${
+            className={`shrink-0 rounded-full p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
               stemsOpen ? "dj-glass-on" : "dj-glass"
             }`}
-            style={{ color: accent }}
+            style={{ color: accent, borderRadius: 9999, width: 44, height: 44 }}
             title="Stems / EQ knobs"
              aria-label={`Stems deck ${deck.id}`}
             aria-expanded={stemsOpen}

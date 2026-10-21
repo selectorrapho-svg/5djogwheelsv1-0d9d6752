@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Activity, Grid3x3, Sliders, Music4, Video } from "lucide-react";
 import { SamplerPanel } from "./SamplerPanel";
-import { Deck, Mixer, type FxKey } from "@/lib/dj/engine";
+import { Deck, Mixer } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
 import { Waveform } from "./Waveform";
 import { HorizontalWaveform } from "./HorizontalWaveform";
@@ -19,15 +19,6 @@ type CenterView = "mixer" | "wave" | "pads" | "samples" | "video";
 
 const EQ_BANDS = ["high", "mid", "low"] as const;
 
-// Pioneer-style Colour FX: one knob per channel, centre = off.
-const COLOR_FX: { id: string; label: string; fx: FxKey | null; color: string }[] = [
-  { id: "filter", label: "Filter", fx: null, color: "#3bd2ff" },
-  { id: "space", label: "Space", fx: "reverb_hall" as FxKey, color: "#c04dff" },
-  { id: "echo", label: "Echo", fx: "echo_1_2" as FxKey, color: "#3bff8a" },
-  { id: "crush", label: "Crush", fx: "bitcrush" as FxKey, color: "#ff8a3b" },
-  { id: "jet", label: "Jet", fx: "flanger_jet" as FxKey, color: "#ffd23b" },
-  { id: "noise", label: "Sweep", fx: "sweep_up" as FxKey, color: "#ff4dd2" },
-];
 
 export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA: Deck; deckB: Deck; mixer: Mixer; videoMode?: boolean }) {
   useDeck(deckA);
@@ -132,21 +123,6 @@ export function MixerView({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
   const [knobs, setKnobs] = useState<Record<"A" | "B", number[]>>({ A: [0, 0, 0], B: [0, 0, 0] });
   const [filter, setFilter] = useState<Record<"A" | "B", number>>({ A: 0, B: 0 });
   const [eqOn, setEqOn] = useState(true);
-  const [colorFx, setColorFx] = useState(COLOR_FX[0]);
-  const applyColor = (deck: Deck, v: number, style = colorFx) => {
-    if (!style.fx) { deck.setFilter(v); return; }
-    deck.setFilter(v * 0.5);
-    const a = Math.abs(v);
-    if (a < 0.03) { if (deck.activeFx === style.fx) deck.setFx(null); return; }
-    if (deck.activeFx !== style.fx) deck.setFx(style.fx, a); else deck.setFxAmount(a);
-  };
-  const pickColor = (style: (typeof COLOR_FX)[number]) => {
-    for (const [id, deck] of [["A", deckA], ["B", deckB]] as const) {
-      if (colorFx.fx && deck.activeFx === colorFx.fx) deck.setFx(null);
-      applyColor(deck, filter[id], style);
-    }
-    setColorFx(style);
-  };
   const saved = useRef<Record<"A" | "B", number[]>>({ A: [0, 0, 0], B: [0, 0, 0] });
 
   const setBand = (id: "A" | "B", deck: Deck, band: (typeof EQ_BANDS)[number], v: number) => {
@@ -178,20 +154,13 @@ export function MixerView({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
 
   return (
     <div className="mixer-overview flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="grid shrink-0 grid-cols-3 gap-1 px-1 pt-1" role="group" aria-label="Colour FX">
-        {COLOR_FX.map((c) => (
-          <button key={c.id} onClick={() => pickColor(c)} aria-pressed={colorFx.id === c.id}
-            className={`color-fx-chip ${colorFx.id === c.id ? "color-fx-chip-on" : ""}`}
-            style={{ "--fx-color": c.color } as React.CSSProperties}>{c.label}</button>
-        ))}
-      </div>
       <div className="flex flex-1 min-h-0 items-center justify-center gap-1 px-1">
-        <ChannelStrip id="A" accent={colorFx.color} filter={filter.A} eq={knobs.A}
-          onFilter={(v) => { setFilter((f) => ({ ...f, A: v })); applyColor(deckA, v); }}
+        <ChannelStrip id="A" accent="var(--foreground)" filter={filter.A} eq={knobs.A}
+          onFilter={(v) => { setFilter((f) => ({ ...f, A: v })); deckA.setFilter(v); }}
           onBand={(band, v) => setBand("A", deckA, band, v)} />
         <div className="flex h-full max-h-56 items-center gap-1 py-2"><LevelMeter deck={deckA} label="A" /><LevelMeter deck={deckB} label="B" /></div>
-        <ChannelStrip id="B" accent={colorFx.color} filter={filter.B} eq={knobs.B}
-          onFilter={(v) => { setFilter((f) => ({ ...f, B: v })); applyColor(deckB, v); }}
+        <ChannelStrip id="B" accent="var(--foreground)" filter={filter.B} eq={knobs.B}
+          onFilter={(v) => { setFilter((f) => ({ ...f, B: v })); deckB.setFilter(v); }}
           onBand={(band, v) => setBand("B", deckB, band, v)} />
       </div>
       <div className="flex justify-center pb-1">
