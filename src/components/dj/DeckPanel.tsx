@@ -115,31 +115,6 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
                 ))}
               </div>
             )}
-            {/* compact Set / Cue pair — small so the jog keeps its size */}
-            <button
-              onClick={() => deck.setCue()}
-              className="ml-1 grid h-7 place-items-center rounded-lg px-2 text-[9px] font-bold uppercase tracking-widest text-muted-foreground"
-              style={{ border: "1px solid var(--glass-border)", background: "var(--glass)" }}
-              aria-label={`Set cue deck ${deck.id}`}
-              title="Set cue point at playhead"
-            >
-              Set
-            </button>
-            <button
-              onPointerDown={() => {
-                if (deck.playing) { deck.pause(); deck.seek(deck.cuePoint); return; }
-                if (Math.abs(deck.currentTime - deck.cuePoint) < 0.05) { previewing.current = true; deck.play(); return; }
-                deck.seek(deck.cuePoint);
-              }}
-              onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
-              onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
-              className="grid h-7 place-items-center rounded-lg px-2 text-[9px] font-bold uppercase tracking-widest"
-              style={{ border: "1px solid var(--glass-border)", background: "var(--glass)", color: accent }}
-              aria-label={`Cue deck ${deck.id}`}
-              title="Cue: return to cue, hold to preview"
-            >
-              Cue
-            </button>
           </div>
           <SyncButton
             onClick={() => {
