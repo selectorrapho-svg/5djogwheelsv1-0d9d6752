@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EffectBrowser } from "./EffectBrowser";
 import { Knob } from "./Knob";
-import { ColorFxPanel } from "./ColorFx";
 
 const fxLabel = (key: FxKey) => FX_LIBRARY.find(p => p.key === key)?.label ?? String(key).replace(/_/g, " ");
 
@@ -60,8 +59,8 @@ export function DeckTools({ deck, accent, side }: { deck: Deck; accent: string; 
           <Knob value={beats} min={0.25} max={4} size={54} label="BEAT" color={accent} showTicks={false} onChange={(v) => deck.setFxBeats(fx, v)} />
         </div>
         <div className="mt-3 border-t border-border pt-3">
-          <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Colour FX</div>
-          <ColorFxPanel deck={deck} />
+          <div className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Filter</div>
+          <input type="range" min={-1} max={1} step={0.01} defaultValue={0} aria-label="Deck filter" onChange={(e) => deck.setFilter(parseFloat(e.target.value))} className="fx-glass-slider mt-2 w-full" />
         </div>
       </PopoverContent>
     </Popover>

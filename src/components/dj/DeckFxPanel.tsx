@@ -6,9 +6,8 @@ import { Sliders, X, ChevronLeft, ChevronRight, Settings2, Power } from "lucide-
 import { EffectBrowser } from "./EffectBrowser";
 import { useDjSettings } from "@/hooks/useDjSettings";
 import { DeckDrawer } from "./DeckDrawer";
-import { ColorFxPanel } from "./ColorFx";
 
-type Tab = "pad" | "instant" | "manual" | "color";
+type Tab = "pad" | "instant" | "manual";
 
 const INSTANT_DEFAULT: FxKey[] = [
   "echo_out_1_2",
@@ -136,7 +135,7 @@ export function DeckFxPanel({
         <FxFrame inline={inline} deckId={deck.id} side={side}>
           {/* tab bar — djay style pill highlight */}
           <div className="flex items-center gap-1 px-2 py-2 border-b border-[var(--glass-border)]">
-            {(["pad", "instant", "manual", "color"] as Tab[]).map((t) => (
+            {(["pad", "instant", "manual"] as Tab[]).map((t) => (
               <Button variant="ghost"
                 key={t}
                 onClick={() => setTab(t)}
@@ -156,7 +155,6 @@ export function DeckFxPanel({
             {beatSettings && <div className="mb-2 border-b border-border pb-2 space-y-1">
               {Array.from(new Set([padFx, ...instant, ...manual])).filter(key => { const base = FX_LIBRARY.find(p => p.key === key)?.base; return base && ["echo", "delay", "gate", "roll", "tremolo", "flanger", "phaser"].includes(base); }).map(key => <label key={key} className="flex items-center justify-between gap-1 text-[10px]"><span className="truncate">{fxLabel(key)}</span><select aria-label={`${fxLabel(key)} beats`} className="bg-background border border-border p-1" value={deck.fxBeatOverrides[key] ?? FX_LIBRARY.find(p => p.key === key)?.params?.beats ?? 1} onChange={e => deck.setFxBeats(key, Number(e.target.value))}>{[0.0625, 0.125, 0.25, 0.5, 1, 2, 3, 4].map(b => <option key={b} value={b}>{b < 1 ? `1/${1 / b}` : `${b}/1`} beat</option>)}</select></label>)}
             </div>}
-            {tab === "color" && <ColorFxPanel deck={deck} />}
             {tab === "pad" && (
               <div className="flex flex-col gap-2">
               <div className="flex items-center gap-1">
