@@ -151,22 +151,44 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
         )}
 
         {/* transport — stays inside the panel on small landscape screens */}
-        <div className="w-full shrink-0 grid grid-cols-[auto_auto] items-center justify-between gap-2 text-[10px] landscape-transport">
+        <div className="w-full shrink-0 grid grid-cols-[auto_auto_auto_auto] items-center justify-between gap-2 text-[10px] landscape-transport">
           <Button variant="ghost"
             onClick={() => deck.toggle()}
             aria-label={`${deck.playing ? "Pause" : "Play"} deck ${deck.id}`}
-            className={`transport-play shrink-0 rounded-full p-0 flex items-center justify-center ${compact ? "size-10" : "size-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
+            className={`transport-play shrink-0 rounded-md p-0 flex items-center justify-center ${compact ? "size-10" : "size-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
             title="Play / Pause"
-            style={{ borderRadius: 9999, width: 44, height: 44 }}
           >
             {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5 translate-x-px" fill="currentColor" />}
           </Button>
           <Button variant="ghost"
+            onClick={() => deck.setCue()}
+            aria-label={`Set cue deck ${deck.id}`}
+            title="Set cue point at playhead"
+            className={`shrink-0 rounded-md p-0 flex items-center justify-center text-[9px] font-bold uppercase tracking-widest text-muted-foreground ${compact ? "size-10" : "size-11"} dj-glass`}
+          >
+            Set
+          </Button>
+          <Button variant="ghost"
+            onPointerDown={() => {
+              if (deck.playing) { deck.pause(); deck.seek(deck.cuePoint); return; }
+              if (Math.abs(deck.currentTime - deck.cuePoint) < 0.05) { previewing.current = true; deck.play(); return; }
+              deck.seek(deck.cuePoint);
+            }}
+            onPointerUp={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+            onPointerCancel={() => { if (previewing.current) { previewing.current = false; deck.pause(); deck.seek(deck.cuePoint); } }}
+            aria-label={`Cue deck ${deck.id}`}
+            title="Cue: return to cue, hold to preview"
+            className={`shrink-0 rounded-md p-0 flex items-center justify-center text-[9px] font-bold uppercase tracking-widest ${compact ? "size-10" : "size-11"} dj-glass`}
+            style={{ color: accent }}
+          >
+            Cue
+          </Button>
+          <Button variant="ghost"
             onClick={() => setStemsOpen((o) => !o)}
-            className={`shrink-0 rounded-full p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
+            className={`shrink-0 rounded-md p-0 flex items-center justify-center font-bold text-sm ${compact ? "size-10" : "size-11"} ${
               stemsOpen ? "dj-glass-on" : "dj-glass"
             }`}
-            style={{ color: accent, borderRadius: 9999, width: 44, height: 44 }}
+            style={{ color: accent }}
             title="Stems / EQ knobs"
              aria-label={`Stems deck ${deck.id}`}
             aria-expanded={stemsOpen}
