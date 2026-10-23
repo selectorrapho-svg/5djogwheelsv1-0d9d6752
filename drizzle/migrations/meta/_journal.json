@@ -15,6 +15,13 @@
       "when": 1792599047089,
       "tag": "0001_noop_check",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792728113771,
+      "tag": "0002_phone_subscription_codes",
+      "breakpoints": true
     }
   ]
 }

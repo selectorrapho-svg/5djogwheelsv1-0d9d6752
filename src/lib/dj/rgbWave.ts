@@ -78,9 +78,7 @@ export function buildRgbStrip(peaks: BandedPeaks, stems: StemsOn, axis: "y" | "x
       const a = half + k;
       // brighter core, softer edges
       const edge = 1 - Math.abs(k) / (ext + 1);
-      // Sharper core / faster edge falloff so zoomed-out waves read as crisp
-      // lines instead of soft blur blocks.
-      const f = 0.45 + 0.55 * edge * edge;
+      const f = 0.55 + 0.45 * edge;
       const p = axis === "y" ? (b * STRIP_AMP + a) * 4 : (a * bins + b) * 4;
       d[p] = r * f;
       d[p + 1] = g * f;
@@ -123,7 +121,7 @@ export function drawZigzag(
   const b0 = Math.max(0, t0 * binsPerSec);
   const b1 = Math.min(n - 1, (t0 + timeLen / pxPerSec) * binsPerSec);
   ctx.lineWidth = 1.2;
-  let prevSpike = 0;
+  let prevA = 0;
   let bi = b0;
   while (bi <= b1) {
     const i = Math.floor(bi);
@@ -131,26 +129,22 @@ export function drawZigzag(
     const amp = Math.min(1, Math.sqrt(l * l + m * m + h * h) / maxAll);
     const along = (bi / binsPerSec - t0) * pxPerSec;
     const a = amp * half;
+    // zigzag: alternate between the previous and current amplitude each bin
     const mx = Math.max(l, m, h, 1e-6);
     const r = (l / mx) * 255, g = (m / mx) * 255, bl = (h / mx) * 255;
     ctx.strokeStyle = `rgb(${r | 0},${g | 0},${bl | 0})`;
-    // Band-aware shape: kick/bass-heavy bins get a designed zigzag spike,
-    // hi-hat and vocal bins stay as smooth envelope strokes (no zigzag).
-    const total = l + m + h;
-    const lowShare = total > 1e-6 ? l / total : 0;
-    const spike = a * (0.25 + 0.75 * lowShare);
     ctx.beginPath();
     if (axis === "y") {
-      ctx.moveTo(cx - prevSpike, along);
+      ctx.moveTo(cx - prevA, along);
       ctx.lineTo(cx + a, along + (pxPerSec / binsPerSec) * step * 0.5);
-      ctx.lineTo(cx - spike, along + (pxPerSec / binsPerSec) * step);
+      ctx.lineTo(cx - a, along + (pxPerSec / binsPerSec) * step);
     } else {
-      ctx.moveTo(along, cx - prevSpike);
+      ctx.moveTo(along, cx - prevA);
       ctx.lineTo(along + (pxPerSec / binsPerSec) * step * 0.5, cx + a);
-      ctx.lineTo(along + (pxPerSec / binsPerSec) * step, cx - spike);
+      ctx.lineTo(along + (pxPerSec / binsPerSec) * step, cx - a);
     }
     ctx.stroke();
-    prevSpike = spike;
+    prevA = a;
     bi += step;
   }
 }

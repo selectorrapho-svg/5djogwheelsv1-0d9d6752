@@ -1,5 +1,6 @@
 # Roadmap
 
+- [ ] Import latest GitHub updates, preserving existing EQ, stems, volume controls and VU meters
 - [ ] Remove Colour FX (FX popup + FX drawer Color tab)
 - [ ] Restore Play / Set / Cue / S transport buttons to original separate square style
 - [ ] Hot cue pads smaller; markers show on waveforms

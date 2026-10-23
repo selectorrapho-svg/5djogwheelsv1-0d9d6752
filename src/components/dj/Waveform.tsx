@@ -103,7 +103,7 @@ export function Waveform({ deck, side }: Props) {
           }
           ctx.closePath();
           ctx.fillStyle = col;
-          ctx.globalAlpha = 0.95;
+          ctx.globalAlpha = 0.85;
           ctx.fill();
         }
         ctx.globalAlpha = 1;
@@ -144,10 +144,8 @@ export function Waveform({ deck, side }: Props) {
       }
 
       // playhead
-      ctx.save(); ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 10;
-      ctx.fillStyle = "#ff4d4d";
+      ctx.fillStyle = "#ff3b3b";
       ctx.fillRect(0, centerY - 1, W, 2);
-      ctx.restore();
 
       // hot cue triangles
       deck.hotCues.forEach((c, i) => {
@@ -194,7 +192,7 @@ export function Waveform({ deck, side }: Props) {
   });
 
   return (
-    <div className={`relative w-full h-full overflow-hidden ${settings.waveBg === "light" ? "wave-surface-light" : "wave-surface-dark"} ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
+    <div className={`wave-surface relative w-full h-full overflow-hidden ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" /><WaveAnalysisStatus deck={deck} />
 
       <div className={`absolute ${side === "left" ? "right-1" : "left-1"} top-1 flex flex-col gap-1`}>
@@ -272,5 +270,5 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
     return () => cancelAnimationFrame(rafRef.current);
   }, [deck, accent]);
 
-  return <canvas ref={canvasRef} className="w-full h-full block" />;
+  return <canvas ref={canvasRef} className="wave-surface w-full h-full block rounded-sm" />;
 }
