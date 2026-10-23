@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable';
 import { useLicense, signUp, logIn, logOut, redeem, approve, parseRequest, whatsappPayUrl, requestCode, PRICE_KES } from '@/lib/dj/license';
 import { PRO_MONTHS } from '@/lib/dj/licenseRules';
+import { PhoneAccountPanel } from "./PhoneAccountPanel";
 export function AccountPanel() {
+  const [phoneEnabled, setPhoneEnabled] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY }, signal: controller.signal })
+      .then(r => r.ok ? r.json() : null).then(settings => setPhoneEnabled(settings?.external?.phone === true)).catch(() => {});
+    return () => controller.abort();
+  }, []);
+  return phoneEnabled ? <PhoneAccountPanel /> : <LegacyAccountPanel />;
+}
+function LegacyAccountPanel() {
   const lic = useLicense(), queryClient = useQueryClient(), navigate = useNavigate();
   const [mode,setMode] = useState<'login'|'signup'>('login');
   const [email,setEmail] = useState(''), [phone,setPhone] = useState(''), [name,setName] = useState(''), [pass,setPass] = useState(''), [code,setCode] = useState(''), [msg,setMsg] = useState(''), [busy,setBusy] = useState(false);

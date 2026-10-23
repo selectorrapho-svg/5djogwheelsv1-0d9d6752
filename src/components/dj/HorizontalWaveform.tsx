@@ -107,7 +107,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
         }
         ctx.closePath();
         ctx.fillStyle = col;
-        ctx.globalAlpha = 0.95;
+        ctx.globalAlpha = 0.85;
         ctx.fill();
       }
       ctx.globalAlpha = 1;
@@ -136,10 +136,8 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
       }
 
       // playhead
-      ctx.save(); ctx.shadowColor = "#ff3b3b"; ctx.shadowBlur = 10;
-      ctx.fillStyle = "#ff4d4d";
+      ctx.fillStyle = "#ff3b3b";
       ctx.fillRect(W / 2 - 1, 0, 2, H);
-      ctx.restore();
 
       // hot cues
       deck.hotCues.forEach((c, i) => {
@@ -186,7 +184,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
   });
 
   return (
-    <div className={`relative w-full h-full ${settings.waveBg === "light" ? "wave-surface-light" : "wave-surface-dark"} ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
+    <div className={`wave-surface relative w-full h-full ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
       <canvas ref={canvasRef} className="w-full h-full block" /><WaveAnalysisStatus deck={deck} />
 
       <div className="absolute right-1 top-1 flex gap-1">

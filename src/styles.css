@@ -306,7 +306,7 @@
 }
 
 @layer components {
-  .landscape-transport { grid-template-columns: 44px minmax(0,1fr) 40px; }
+  .landscape-transport { grid-template-columns: 48px minmax(0,1fr) minmax(0,1fr) 40px; }
   .landscape-transport .transport-play { width: 44px; height: 44px; border-radius: 50%; padding: 0; }
   .transport-playing { color: var(--accent-green); border-color: var(--accent-green); }
   .landscape-jog-slot { container-type: size; }
@@ -515,3 +515,6 @@
 .stem-switch { display: flex; padding: 2px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-border); }
 .stem-switch button { padding: 0 10px; height: 20px; border-radius: 999px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-foreground); }
 .stem-switch button[aria-pressed="true"] { color: var(--foreground); background: var(--glass-strong); box-shadow: var(--glass-shadow); }
+
+.wave-surface { background: var(--wave-dark); }
+.reference-control { background: var(--glass); border: 1px solid var(--glass-border); }

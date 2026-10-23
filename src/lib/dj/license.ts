@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { getOfflineLicense, getLicensePublicKey } from './license.functions';
 import { canUseStudio, MAX_DEVICES, type OfflineEntitlement } from './licenseRules';
+import { authPhone } from './phoneRules';
 export { MAX_DEVICES };
 export const ADMIN_WHATSAPP = '254745260364';
 export const PRICE_KES = 150;
@@ -74,3 +75,13 @@ export function whatsappPayUrl() { return `https://wa.me/${ADMIN_WHATSAPP}?text=
 export function parseRequest(text: string) { const m = text.match(/REQ-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-([A-F0-9]{8})/i); return m ? { userId: m[1].toLowerCase(), device: m[2].toUpperCase() } : null; }
 export async function approve(userId: string, device: string, months = 1) { const { data, error } = await supabase.rpc('issue_pro_code', { _user_id: userId, _device: device, _months: months }); if (error) throw error; return data; }
 export async function redeem(code: string) { const { error } = await supabase.rpc('redeem_pro_code', { _code: code, _device: state.deviceId }); if (error) throw error; await refreshLicense(); }
+
+export async function signUpPhone(phone: string, name: string, password: string) {
+  if (!name.trim() || password.length < 8) throw new Error('Enter your name and a password of at least 8 characters.');
+  const { error } = await supabase.auth.signUp({ phone: authPhone(phone), password, options: { data: { name: name.trim().slice(0,60) } } });
+  if (error) throw error;
+}
+export async function logInPhone(phone: string, password: string) { const { error } = await supabase.auth.signInWithPassword({ phone: authPhone(phone), password }); if (error) throw error; await refreshLicense(); }
+export async function verifyPhone(phone: string, token: string) { const { error } = await supabase.auth.verifyOtp({ phone: authPhone(phone), token, type: 'sms' }); if (error) throw error; await refreshLicense(); }
+export async function approvePhone(phone: string, expiresAt: string) { const { data, error } = await supabase.rpc('issue_phone_pro_code', { _phone: authPhone(phone), _expires_at: expiresAt }); if (error) throw error; return data; }
+export async function redeemPhone(code: string) { const { error } = await supabase.rpc('redeem_phone_pro_code', { _code: code, _device: state.deviceId }); if (error) throw error; await refreshLicense(); }

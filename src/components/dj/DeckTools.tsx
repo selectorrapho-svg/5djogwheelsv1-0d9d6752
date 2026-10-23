@@ -41,7 +41,7 @@ export function DeckTools({ deck, accent, side }: { deck: Deck; accent: string; 
           <Sliders className="size-4" style={{ color: deck.activeFx ? accent : "var(--muted-foreground)" }} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent side={side === "left" ? "right" : "left"} align="center" className="w-60 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-3xl p-3" style={{ background: "var(--popover)", border: "1px solid var(--glass-border)", backdropFilter: "blur(24px)" }}>
+      <PopoverContent side={side === "left" ? "right" : "left"} align="center" className="w-60 rounded-3xl p-3" style={{ background: "var(--popover)", border: "1px solid var(--glass-border)", backdropFilter: "blur(24px)" }}>
         <button onClick={() => setBrowse(true)} className="flex h-11 w-full items-center justify-between rounded-2xl px-3 text-sm font-semibold uppercase tracking-wide" style={{ background: "var(--glass)", border: "1px solid var(--glass-border)" }}>
           <span className="min-w-0 truncate">{fxLabel(fx)}</span><ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </button>
@@ -57,10 +57,6 @@ export function DeckTools({ deck, accent, side }: { deck: Deck; accent: string; 
           </button>
           <Knob value={depth} size={54} label="DEPTH" color={accent} showTicks={false} onChange={(v) => { setDepth(v); if (on) deck.setFxAmount(v); }} />
           <Knob value={beats} min={0.25} max={4} size={54} label="BEAT" color={accent} showTicks={false} onChange={(v) => deck.setFxBeats(fx, v)} />
-        </div>
-        <div className="mt-3 border-t border-border pt-3">
-          <div className="text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Filter</div>
-          <input type="range" min={-1} max={1} step={0.01} defaultValue={0} aria-label="Deck filter" onChange={(e) => deck.setFilter(parseFloat(e.target.value))} className="fx-glass-slider mt-2 w-full" />
         </div>
       </PopoverContent>
     </Popover>

@@ -6,15 +6,12 @@ import splash from "@/assets/djogwheels-splash-clean.jpg";
 import portraitSplash from "@/assets/djogwheels-portrait-splash.png.asset.json";
 import { AccountPanel } from "./AccountPanel";
 import { whatsappPayUrl, PRICE_KES } from "@/lib/dj/license";
-import pricingBg from "@/assets/pricing-bg.jpg";
-import posterStudio from "@/assets/poster-studio.jpg";
-import posterVideo from "@/assets/poster-video.jpg";
 
 /**
  * Original artwork → optional payment + login. Entering the mixer is only via Skip.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
-  const [phase, setPhase] = useState<"splash" | "offer" | "studio" | "video">("splash");
+  const [phase, setPhase] = useState<"splash" | "offer">("splash");
 
   return (
     <div className="fixed inset-0 z-[100] bg-background dark overflow-hidden">
@@ -32,10 +29,9 @@ export function Splash({ onDone }: { onDone: () => void }) {
 
       {phase === "offer" && (
         <div className="pricing-neutral absolute inset-0 flex justify-center overflow-y-auto p-3">
-          <div className="pointer-events-none fixed inset-0 overflow-hidden"><img src={pricingBg} alt="" className="pricing-animated-bg absolute inset-0 size-full object-cover" /><div className="pricing-animated-glow absolute inset-0" /><div className="absolute inset-0 bg-background/40" /></div>
           <div className="pricing-glass relative my-auto w-full max-w-[420px] rounded-2xl p-4">
             <Button variant="ghost" size="icon"
-              onClick={() => setPhase("studio")}
+              onClick={onDone}
               aria-label="Continue without subscribing"
               className="absolute top-2 right-2 text-muted-foreground"
             >
@@ -63,22 +59,13 @@ export function Splash({ onDone }: { onDone: () => void }) {
             </div>
 
             <Button
-              onClick={() => setPhase("studio")}
+              onClick={onDone}
               variant="outline"
               className="mt-3 w-full h-11 text-sm font-semibold"
             >
               Continue with the free version
             </Button>
           </div>
-        </div>
-      )}
-
-      {(phase === "studio" || phase === "video") && (
-        <div key={phase} className="poster-in absolute inset-0 bg-background">
-          <img src={phase === "studio" ? posterStudio : posterVideo} alt={phase === "studio" ? "Studio — produce, edit, record" : "Video Mix — mix music videos live"} width={1600} height={912} className="absolute inset-0 size-full object-cover" />
-          <Button onClick={() => (phase === "studio" ? setPhase("video") : onDone())} className="splash-next absolute bottom-[8%] right-[6%] min-w-28 border border-border bg-background/60 text-foreground shadow-lg backdrop-blur-md hover:bg-background" aria-label={phase === "studio" ? "Next to video" : "Launch the app"}>
-            {phase === "studio" ? "Next" : "Launch"}
-          </Button>
         </div>
       )}
     </div>

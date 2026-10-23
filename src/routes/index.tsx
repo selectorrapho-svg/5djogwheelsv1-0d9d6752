@@ -17,9 +17,6 @@ import { Crossfader } from "@/components/dj/Crossfader";
 import { StudioView } from "@/components/dj/StudioView";
 import { AutomixView } from "@/components/dj/AutomixView";
 import { getAutomix } from "@/lib/dj/automix";
-import { useLicense } from "@/lib/dj/license";
-import { AccountPanel } from "@/components/dj/AccountPanel";
-import { Button } from "@/components/ui/button";
 import { FourDeckLayout } from "@/components/dj/FourDeckLayout";
 
 export const Route = createFileRoute("/")({
@@ -43,7 +40,6 @@ export const Route = createFileRoute("/")({
 
 function DjApp() {
   const mixer = useMixer();
-  const license = useLicense();
   const portrait = usePortrait();
   useTheme();
   const [mode, setMode] = useAppMode();
@@ -74,7 +70,7 @@ function DjApp() {
   return (
     <>
       {mixer && automixOpen && <AutomixView mixer={mixer} onClose={() => { getAutomix(mixer).stop(); setAutomixOpen(false); }} />}
-      {mixer && studioOpen && (license.isPro ? <StudioView mixer={mixer} onClose={() => setStudioOpen(false)} /> : <div role="dialog" aria-label="Studio PRO access" className="fixed inset-0 z-[310] overflow-y-auto bg-background p-4 text-foreground"><div className="mx-auto max-w-sm"><Button variant="ghost" onClick={() => setStudioOpen(false)}>← Mixer</Button><h1 className="my-4 text-xl font-semibold">Studio · PRO</h1><AccountPanel /></div></div>)}
+      {mixer && studioOpen && <StudioView mixer={mixer} onClose={() => setStudioOpen(false)} />}
       {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
       {!mixer || !decks ? (
         <div className="fixed inset-0 bg-background text-foreground flex items-center justify-center">
@@ -89,8 +85,12 @@ function DjApp() {
           {mode === "video" ? (
             <div className="absolute inset-0 flex flex-col">
               <div className="relative" data-dj-topbar>
-                <TopBar deckA={decks.left} deckB={decks.right} center={<><SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} /><ThemeToggle /></>} />
+                <TopBar deckA={decks.left} deckB={decks.right} />
                 <div className="h-px bg-border" />
+                <div className="absolute left-1/2 -translate-x-1/2 top-1 flex items-center gap-1">
+                  <SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} />
+                  <ThemeToggle />
+                </div>
               </div>
               <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
                 <DeckPanel deck={decks.left} side="left" videoMode={mode === "video"} />
@@ -111,8 +111,13 @@ function DjApp() {
               <div className="absolute inset-0 bg-background/85" />
               <div className="relative flex flex-col h-full">
                 <div className="relative" data-dj-topbar>
-                  <TopBar deckA={decks.left} deckB={decks.right} center={<><SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} /><ThemeToggle /></>} />
+                  <TopBar deckA={decks.left} deckB={decks.right} />
                   <div className="h-px bg-border" />
+                  <div className="absolute left-1/2 -translate-x-1/2 top-1 flex items-center gap-1">
+                    
+                    <SettingsPanel mode={mode} setMode={changeMode} onAutomix={() => setAutomixOpen(true)} />
+                    <ThemeToggle />
+                  </div>
                 </div>
                 <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
                   <DeckPanel deck={decks.left} side="left" />
