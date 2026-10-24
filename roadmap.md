@@ -1,11 +1,27 @@
-# Roadmap
+# Task roadmap
 
-- [ ] Import latest GitHub updates, preserving existing EQ, stems, volume controls and VU meters
-- [ ] Remove Colour FX (FX popup + FX drawer Color tab)
-- [ ] Restore Play / Set / Cue / S transport buttons to original separate square style
-- [ ] Hot cue pads smaller; markers show on waveforms
-- [ ] Waveforms: kicks slight designed zigzag, hats/vocals smooth, clearer (less blurry blocks)
-- [ ] Stems: cleaner removal of vocals/drums (steeper filters)
-- [ ] Portrait: top-bar waveforms ON at launch; waveform icon
-- [ ] Settings: remove Motor spin-up / Instant play scratch options
-- [ ] Scratch/interface polish toward Serato feel (fonts, buttons, defaults)
+## Phase 1 — Auth & accounts
+- [ ] Remove Google + Lovable sign-in; phone number + password only
+- [ ] Admin: 0745260364 / selectorrapho@gmail.com get PRO unlocked via user_roles (never hardcode passwords in code)
+
+## Phase 2 — Studio fixes
+- [ ] Fix slow/failing project save & reopen (large base64 WAV writes)
+- [ ] Save recordings as MP3
+- [ ] Free mode: no login, max 5 imported tracks, persistent device folder until deleted
+- [ ] Minimize Studio top bar: reverse + combine buttons into dropdown
+- [ ] Add 50+ track/event FX
+
+## Phase 3 — Stability & offline
+- [ ] Fix Bluetooth connect freeze (audio route change)
+- [ ] Make everything work offline
+- [ ] Delete unused images
+
+## Phase 4 — Branding & UI
+- [ ] Silver splash with offline mix4deejays logo
+- [ ] New default icon for tracks with no cover (offline)
+- [ ] Import useful code from res.zip (scratch, waveforms)
+- [ ] Shrink top-bar full-track waveforms; transparent mix4deejays logo
+- [ ] Portrait: djogwheels pro logo → mix4deejays logo
+- [ ] New settings icon; remove orange accent app-wide
+- [ ] Samples & FX button; jogwheel marker turns cue color at cue point
+- [ ] Cue/sample pads overlay restyle — consistent pad design
