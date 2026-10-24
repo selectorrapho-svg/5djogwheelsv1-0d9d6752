@@ -102,6 +102,7 @@ export const deviceLibrary = {
     return true;
   },
   async restore() {
+    await this.restoreStored().catch(() => {});
     if (await this.scanNative().catch(() => false)) return;
     const handle = await readHandle();
     if (!handle) return;
