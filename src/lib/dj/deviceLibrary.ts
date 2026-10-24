@@ -40,10 +40,47 @@ export const deviceLibrary = {
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
   snapshot() { return current; },
   async addFiles(files: File[]) {
-    const next: DeviceTrack[] = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name))
-      .map(f => ({ title: f.name.replace(/\.[^.]+$/, ''), filename: f.name, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const, artworkUrl: null }));
-    tracks = [...next, ...tracks.filter(t => !next.some(n => n.filename === t.filename && t.file))]; publish();
+    const accepted = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name));
+    if (!accepted.length) return;
+    const imported = tracks.filter(t => t.file || t.stored).length;
+    if (!isPro() && imported + accepted.length > FREE_IMPORT_LIMIT) {
+      throw new Error(`Free version keeps ${FREE_IMPORT_LIMIT} imported tracks. Go PRO for unlimited imports.`);
+    }
+    await ensureLibraryDir();
+    const next: DeviceTrack[] = [];
+    for (const f of accepted) {
+      const filename = safeFileName(f.name);
+      try {
+        await Filesystem.writeFile({ path: `${LIBRARY_DIR}/${filename}`, directory: Directory.Documents, data: await blobToBase64(f), recursive: true });
+      } catch { throw new Error(`Could not keep ${f.name} on this device.`); }
+      next.push({ title: f.name.replace(/\.[^.]+$/, ''), filename, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const, artworkUrl: null, stored: true });
+    }
+    tracks = [...next, ...tracks.filter(t => !next.some(n => n.filename === t.filename && (t.file || t.stored)))]; publish();
     queueArtwork(next);
+  },
+  /** Delete an imported track from the device folder and the list. */
+  async removeTrack(track: DeviceTrack) {
+    if (track.stored) {
+      try { await Filesystem.deleteFile({ path: `${LIBRARY_DIR}/${track.filename}`, directory: Directory.Documents }); } catch { /* already gone */ }
+    }
+    tracks = tracks.filter(t => t !== track); publish();
+  },
+  /** Reload tracks kept in the device folder (survives app restarts). */
+  async restoreStored() {
+    await ensureLibraryDir();
+    let listing;
+    try { listing = await Filesystem.readdir({ path: LIBRARY_DIR, directory: Directory.Documents }); } catch { return; }
+    const found: DeviceTrack[] = [];
+    for (const entry of listing.files) {
+      if (entry.type !== 'file' || !/\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(entry.name)) continue;
+      if (tracks.some(t => t.stored && t.filename === entry.name)) continue;
+      try {
+        const data = (await Filesystem.readFile({ path: `${LIBRARY_DIR}/${entry.name}`, directory: Directory.Documents })).data as string;
+        const mime = /\.(mp4|webm|mov)$/i.test(entry.name) ? 'video/mp4' : 'audio/mpeg';
+        found.push({ title: entry.name.replace(/\.[^.]+$/, ''), filename: entry.name, url: '', file: base64ToFile(data, entry.name, mime), kind: /\.(mp4|webm|mov)$/i.test(entry.name) ? 'video' : 'audio', artworkUrl: null, stored: true });
+      } catch { /* skip unreadable file */ }
+    }
+    if (found.length) { tracks = [...found, ...tracks]; publish(); queueArtwork(found); }
   },
   /** Android app: ask permission once, then list every song/video on the phone. */
   async scanNative() {
