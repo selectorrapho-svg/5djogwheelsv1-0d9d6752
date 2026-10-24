@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Settings, X, Music2, Video, Layers, Disc3, Circle, Gamepad2, UserRound, ChevronRight, ArrowLeft, FolderOpen, FileAudio } from "lucide-react";
 import { deviceLibrary } from "@/lib/dj/deviceLibrary";
-import { blobToWav, type RecordingKind, type VideoQuality } from "@/lib/dj/recording";
+import { blobToWav, FREE_VIDEO_LIMIT_MS, type RecordingKind, type VideoQuality } from "@/lib/dj/recording";
 import { saveRecording } from '@/lib/dj/studioStorage';
 import { getMixer } from "@/lib/dj/useMixer";
 import { AppMode } from "@/hooks/useAppMode";
@@ -67,37 +67,59 @@ export function SettingsPanel({
     setPerms((p) => ({ ...p, notif: notificationState() }));
   }, [open]);
 
+  const finalizeBlob = async (blob: Blob | null) => {
+    if (blob?.size && s.recording.kind === "audio" && s.recording.format === "wav") {
+      setStatus("Converting to WAV…");
+      try { blob = await blobToWav(blob); setStatus(""); } catch { setStatus("WAV conversion failed — saved as WebM."); }
+    }
+    if (blob && blob.size) {
+      try { setStatus(`Saved ${await saveRecording(`mix-${Date.now()}`,blob)}`); }
+      catch { setStatus('Device folder save failed; downloading the recording instead.'); }
+      const url = URL.createObjectURL(blob);
+      const ext = blob.type.includes("wav") ? "wav" : blob.type.includes("mp4") ? "mp4" : "webm";
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mix-${Date.now()}.${ext}`;
+      a.click();
+      // Free the recording from memory once the download has started.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
+  };
+
   const toggleRecord = async () => {
     const m = getMixer();
     if (!m) return;
     if (recording) {
-      let blob = await m.stopRecord();
+      const blob = await m.stopRecord();
       setRecording(false);
-      if (blob?.size && s.recording.kind === "audio" && s.recording.format === "wav") {
-        setStatus("Converting to WAV…");
-        try { blob = await blobToWav(blob); setStatus(""); } catch { setStatus("WAV conversion failed — saved as WebM."); }
-      }
-      if (blob && blob.size) {
-        try { setStatus(`Saved ${await saveRecording(`mix-${Date.now()}`,blob)}`); }
-        catch { setStatus('Device folder save failed; downloading the recording instead.'); }
-        const url = URL.createObjectURL(blob);
-        const ext = blob.type.includes("wav") ? "wav" : blob.type.includes("mp4") ? "mp4" : "webm";
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `mix-${Date.now()}.${ext}`;
-        a.click();
-        // Free the recording from memory once the download has started.
-        setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      }
+      await finalizeBlob(blob);
     } else {
       try {
         await m.resume();
-        m.startRecord(s.recording);
+        const limited = !isPro() && s.recording.kind === "video";
+        m.startRecord(limited ? { ...s.recording, maxMs: FREE_VIDEO_LIMIT_MS } : s.recording);
         setRecording(true);
-        setStatus("");
+        setStatus(limited ? "Free mode: video records up to 5 minutes." : "");
       } catch (error) { setStatus(error instanceof Error ? error.message : "Recording could not start."); }
     }
   };
+
+  // Free video limit: the engine stops by itself at 5 minutes — save the take.
+  useEffect(() => {
+    if (!recording) return;
+    const t = setInterval(() => {
+      const m = getMixer();
+      if (m && !m.recorder) {
+        setRecording(false);
+        const blob = m.autoStoppedBlob;
+        m.autoStoppedBlob = null;
+        setStatus("5-minute free limit reached — saving your video.");
+        void finalizeBlob(blob);
+      }
+    }, 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recording]);
 
   return (
     <>

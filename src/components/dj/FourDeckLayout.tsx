@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SlidersVertical, LayoutGrid, Play, Pause, Music } from "lucide-react";
 import type { Deck, Mixer } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
+import { isPro } from "@/lib/dj/license";
+import { FREE_VIDEO_LIMIT_MS } from "@/lib/dj/recording";
 import { Waveform, TrackOverview } from "./Waveform";
 import { Crossfader } from "./Crossfader";
 import { SettingsPanel } from "./SettingsPanel";
@@ -121,6 +123,29 @@ export function FourDeckLayout({
   const [rec, setRec] = useState(false);
   const [topVisible, setTopVisible] = useState(false);
   const order: Deck[] = [mixer.decks.A, mixer.decks.B, mixer.decks.C, mixer.decks.D];
+
+  const downloadBlob = (blob: Blob | null) => {
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `djogpro-mix.${blob.type.includes("mp4") ? "mp4" : "webm"}`;
+    a.click();
+  };
+
+  // Free video limit: the engine stops by itself at 5 minutes — save the take.
+  useEffect(() => {
+    if (!rec) return;
+    const t = setInterval(() => {
+      if (!mixer.recorder) {
+        setRec(false);
+        const blob = mixer.autoStoppedBlob;
+        mixer.autoStoppedBlob = null;
+        downloadBlob(blob);
+      }
+    }, 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rec, mixer]);
   return (
     <div className="fixed inset-0 bg-background text-foreground select-none overflow-hidden flex flex-col">
       <div data-dj-topbar className="h-11 shrink-0 flex items-center justify-center gap-8 border-b border-border">
@@ -132,14 +157,10 @@ export function FourDeckLayout({
             if (rec) {
               const blob = await mixer.stopRecord();
               setRec(false);
-              if (blob) {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = `djogpro-mix.${blob.type.includes("mp4") ? "mp4" : "webm"}`;
-                a.click();
-              }
+              downloadBlob(blob);
             } else {
-              mixer.startRecord();
+              const limited = !isPro() && mixer.recordOptions.kind === "video";
+              mixer.startRecord(limited ? { ...mixer.recordOptions, maxMs: FREE_VIDEO_LIMIT_MS } : undefined);
               setRec(true);
             }
           }}

@@ -1562,12 +1562,21 @@ export class Mixer {
     // Flush small chunks every second so stopping never has to encode/copy
     // the entire mix in one go (that was the post-record freeze).
     this.recorder.start(1000);
+    // Free-tier video limit: stop automatically when the cap is reached and
+    // keep the blob so the UI can save it exactly like a manual stop.
+    if (options.maxMs && options.maxMs > 0) {
+      this.recordTimer = setTimeout(() => { void this.stopRecord(true); }, options.maxMs);
+    }
     this.emit();
   }
 
   recordCanvasStream: MediaStream | null = null;
+  recordTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Set when a recording hit its time limit and stopped by itself. */
+  autoStoppedBlob: Blob | null = null;
 
-  async stopRecord(): Promise<Blob | null> {
+  async stopRecord(auto = false): Promise<Blob | null> {
+    if (this.recordTimer) { clearTimeout(this.recordTimer); this.recordTimer = null; }
     if (!this.recorder) return null;
     const rec = this.recorder;
     const done = new Promise<Blob>((res) => {
@@ -1576,6 +1585,7 @@ export class Mixer {
         this.recordChunks = [];
         this.recordCanvasStream?.getTracks().forEach((t) => t.stop());
         this.recordCanvasStream = null;
+        if (auto) this.autoStoppedBlob = blob;
         res(blob);
       };
     });

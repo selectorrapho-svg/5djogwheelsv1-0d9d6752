@@ -5,10 +5,11 @@
 - [ ] Admin: 0745260364 / selectorrapho@gmail.com get PRO unlocked via user_roles (never hardcode passwords in code)
 
 ## Phase 2 — Studio fixes
+- [x] Free mode: video recording capped at 5 minutes (PRO unlimited)
 - [ ] Fix slow/failing project save & reopen (large base64 WAV writes)
 - [ ] Save recordings as MP3
 - [ ] Free mode: no login, max 5 imported tracks, persistent device folder until deleted
-- [ ] Minimize Studio top bar: reverse + combine buttons into dropdown
+- [x] Minimize Studio top bar: reverse + combine buttons into dropdown
 - [ ] Add 50+ track/event FX
 
 ## Phase 3 — Stability & offline
