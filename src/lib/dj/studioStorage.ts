@@ -6,8 +6,12 @@ import { studioWav, trimClip, type StudioClip } from "./studio";
  * `duigsstudio` folder (Documents directory on Android/iOS, IndexedDB-backed
  * storage in the browser preview):
  *
- *   duigsstudio/projects/<name>/project.json + clip-<id>.wav
- *   duigsstudio/recordings/<name>.wav
+ *   duigsstudio/projects/<name>/project.json + src-<n>.wav
+ *   duigsstudio/recordings/<name>.wav|mp3
+ *
+ * Clips made by splitting/trimming one song share the same source audio, so
+ * each unique source is written once and clips point at it — saving stays
+ * fast even with many clips from the same track.
  */
 export const STUDIO_ROOT = "duigsstudio";
 const PROJECTS = `${STUDIO_ROOT}/projects`;
@@ -56,18 +60,40 @@ export async function saveStudioProject(name: string, bpm: number, clips: Studio
   const folder = safeName(name);
   const dir = `${PROJECTS}/${folder}`;
   await ensureDir(dir);
+
+  // Write each unique source buffer once; clips reference it by file name.
+  const sourceFiles = new Map<AudioBuffer, string>();
   const clipMetas: ClipMeta[] = [];
   for (const clip of clips) {
     const { buffer, source, ...meta } = clip;
-    const file = `clip-${clip.id}.wav`;
-    await Filesystem.writeFile({
-      path: `${dir}/${file}`,
-      directory: Directory.Documents,
-      data: await blobToBase64(studioWav(source ?? buffer)),
-      recursive: true,
-    });
+    const src = source ?? buffer;
+    let file = sourceFiles.get(src);
+    if (!file) {
+      file = `src-${sourceFiles.size + 1}.wav`;
+      sourceFiles.set(src, file);
+      await Filesystem.writeFile({
+        path: `${dir}/${file}`,
+        directory: Directory.Documents,
+        data: await blobToBase64(studioWav(src)),
+        recursive: true,
+      });
+    }
     clipMetas.push({ ...meta, file });
   }
+
+  // Remove audio files from older saves that are no longer referenced.
+  try {
+    const listing = await Filesystem.readdir({ path: dir, directory: Directory.Documents });
+    const keep = new Set([...sourceFiles.values(), "project.json"]);
+    for (const entry of listing.files) {
+      if (entry.type === "file" && !keep.has(entry.name)) {
+        await Filesystem.deleteFile({ path: `${dir}/${entry.name}`, directory: Directory.Documents }).catch(() => {});
+      }
+    }
+  } catch {
+    /* cleanup is best-effort */
+  }
+
   const info: StudioProjectInfo = { name: folder, bpm, savedAt: Date.now(), clips: clipMetas.length, path: `${STUDIO_ROOT}/projects/${folder}` };
   await Filesystem.writeFile({
     path: `${dir}/project.json`,
@@ -104,13 +130,18 @@ export async function loadStudioProject(name: string, ctx: BaseAudioContext): Pr
   const dir = `${PROJECTS}/${safeName(name)}`;
   const raw = (await Filesystem.readFile({ path: `${dir}/project.json`, directory: Directory.Documents, encoding: Encoding.UTF8 })).data as string;
   const manifest = JSON.parse(raw);
+  const decoded = new Map<string, AudioBuffer>();
   const clips: StudioClip[] = [];
   for (const meta of manifest.clipMetas as ClipMeta[]) {
     const { file, ...rest } = meta;
     try {
-      const data = (await Filesystem.readFile({ path: `${dir}/${file}`, directory: Directory.Documents })).data as string;
-      const bytes = base64ToBytes(data);
-      const source = await ctx.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+      let source = decoded.get(file);
+      if (!source) {
+        const data = (await Filesystem.readFile({ path: `${dir}/${file}`, directory: Directory.Documents })).data as string;
+        const bytes = base64ToBytes(data);
+        source = await ctx.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+        decoded.set(file, source);
+      }
       const trimmed = trimClip({ ...rest, buffer: source } as StudioClip, rest.srcStart ?? 0, rest.srcEnd ?? source.duration);
       clips.push({ ...rest, buffer: trimmed.buffer, source });
     } catch {
