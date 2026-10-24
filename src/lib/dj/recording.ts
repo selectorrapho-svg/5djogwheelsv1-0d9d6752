@@ -7,7 +7,11 @@ export interface RecordingOptions {
   lowStorage: boolean;
   /** Audio file format: compressed WebM or lossless WAV (converted after stopping). */
   format?: "webm" | "wav";
+  /** Auto-stop the recording after this many milliseconds (free-tier video limit). */
+  maxMs?: number;
 }
+/** Free accounts can record up to 5 minutes of video; PRO is unlimited. */
+export const FREE_VIDEO_LIMIT_MS = 5 * 60 * 1000;
 export const DEFAULT_RECORDING: RecordingOptions = { kind: "audio", videoQuality: "720", audioKbps: 192, lowStorage: false };
 export function recordingProfile(options: RecordingOptions) {
   const height = Number(options.videoQuality);
