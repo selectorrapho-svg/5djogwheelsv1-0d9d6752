@@ -1,11 +1,11 @@
 {
+  "version": 1,
   "asset_id": "6a82ef85-218f-47d7-be62-2b11f7deb26d",
-  "content_type": "application/wasm",
-  "created_at": "2026-10-21T16:08:25Z",
-  "original_filename": "demucs_wasm_bg.wasm",
-  "project_id": "813dd21e-7dfa-4463-9d2d-15484893e07e",
-  "r2_key": "a/v1/813dd21e-7dfa-4463-9d2d-15484893e07e/6a82ef85-218f-47d7-be62-2b11f7deb26d/demucs_wasm_bg.wasm",
-  "size": 12319325,
+  "project_id": "33af6b1f-a0f8-4bce-ac86-50221c2e1e70",
   "url": "/__l5e/assets-v1/6a82ef85-218f-47d7-be62-2b11f7deb26d/demucs_wasm_bg.wasm",
-  "version": 1
+  "r2_key": "a/v1/33af6b1f-a0f8-4bce-ac86-50221c2e1e70/6a82ef85-218f-47d7-be62-2b11f7deb26d/demucs_wasm_bg.wasm",
+  "original_filename": "demucs_wasm_bg.wasm",
+  "size": 12319325,
+  "content_type": "application/wasm",
+  "created_at": "2026-10-21T16:08:25Z"
 }

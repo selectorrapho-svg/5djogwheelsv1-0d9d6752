@@ -1,11 +1,11 @@
 {
+  "version": 1,
   "asset_id": "c4043075-8835-42d7-b853-7772d1cb1a2b",
-  "content_type": "audio/mpeg",
-  "created_at": "2026-10-21T16:08:19Z",
-  "original_filename": "best_in_swahili.mp3",
-  "project_id": "813dd21e-7dfa-4463-9d2d-15484893e07e",
-  "r2_key": "a/v1/813dd21e-7dfa-4463-9d2d-15484893e07e/c4043075-8835-42d7-b853-7772d1cb1a2b/best_in_swahili.mp3",
-  "size": 110501,
+  "project_id": "33af6b1f-a0f8-4bce-ac86-50221c2e1e70",
   "url": "/__l5e/assets-v1/c4043075-8835-42d7-b853-7772d1cb1a2b/best_in_swahili.mp3",
-  "version": 1
+  "r2_key": "a/v1/33af6b1f-a0f8-4bce-ac86-50221c2e1e70/c4043075-8835-42d7-b853-7772d1cb1a2b/best_in_swahili.mp3",
+  "original_filename": "best_in_swahili.mp3",
+  "size": 110501,
+  "content_type": "audio/mpeg",
+  "created_at": "2026-10-21T16:08:19Z"
 }

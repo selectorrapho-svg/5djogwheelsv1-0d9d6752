@@ -1,11 +1,11 @@
 {
+  "version": 1,
   "asset_id": "9ea3f3a4-6247-4432-bbe2-44b04f3c260c",
-  "content_type": "image/webp",
-  "created_at": "2026-10-21T16:07:14Z",
-  "original_filename": "jog-neon-disc.webp",
-  "project_id": "813dd21e-7dfa-4463-9d2d-15484893e07e",
-  "r2_key": "a/v1/813dd21e-7dfa-4463-9d2d-15484893e07e/9ea3f3a4-6247-4432-bbe2-44b04f3c260c/jog-neon-disc.webp",
-  "size": 95434,
+  "project_id": "33af6b1f-a0f8-4bce-ac86-50221c2e1e70",
   "url": "/__l5e/assets-v1/9ea3f3a4-6247-4432-bbe2-44b04f3c260c/jog-neon-disc.webp",
-  "version": 1
+  "r2_key": "a/v1/33af6b1f-a0f8-4bce-ac86-50221c2e1e70/9ea3f3a4-6247-4432-bbe2-44b04f3c260c/jog-neon-disc.webp",
+  "original_filename": "jog-neon-disc.webp",
+  "size": 95434,
+  "content_type": "image/webp",
+  "created_at": "2026-10-21T16:07:14Z"
 }
