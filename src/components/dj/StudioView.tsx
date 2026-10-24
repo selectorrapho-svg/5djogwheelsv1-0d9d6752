@@ -338,11 +338,14 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
       const src = off.createBufferSource(); src.buffer = await prepareStudioClip(s.clip);
       connectStudioFx(off, src, off.destination, s.clip, s.delay, clipDuration(s.clip) - s.offset); src.start(s.delay, s.offset);
     }
-    const blob = studioWav(await off.startRendering());
+    const rendered = await off.startRendering();
+    setBusy("Encoding MP3…");
+    const { bufferToMp3 } = await import("@/lib/dj/mp3");
+    const blob = bufferToMp3(rendered);
     const path = await saveRecording(`${projectName}-mix`, blob);
     setFileStatus(`Saved ${path}`);
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "studio-mix.wav"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "studio-mix.mp3"; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     setBusy("");
     } catch { setBusy("Could not export audio"); }
