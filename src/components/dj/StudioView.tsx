@@ -9,6 +9,7 @@ import { connectStudioFx, prepareStudioClip } from "@/lib/dj/studioAudio";
 import { saveStudioProject, listStudioProjects, loadStudioProject, saveRecording, type StudioProjectInfo } from '@/lib/dj/studioStorage';
 import { Input } from '@/components/ui/input';
 import { ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator } from "@/components/ui/context-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const ALL_STEMS = { bass: true, drums: true, vocals: true, other: true };
 const LANE_COLORS = ["var(--studio-1)", "var(--studio-2)", "var(--studio-3)", "var(--studio-4)", "var(--studio-5)", "var(--studio-6)"];
@@ -376,9 +377,16 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
       <Button variant="ghost" onClick={() => { stop(); onClose(); }}><ArrowLeft />Mixer</Button>
       <h1 className="text-base font-semibold">Studio</h1>
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon" className="size-9" aria-label="Save project" title="Save project" disabled={!!busy} onClick={() => void saveProject()}><Save className="size-4" /></Button>
-        <Button variant="ghost" size="icon" className="size-9" aria-label="Open saved project" title="Open saved project" disabled={!!busy} onClick={() => void openProjects()}><FolderOpen className="size-4" /></Button>
-        <Button variant="ghost" size="icon" className="size-9" aria-label="Export mix as MP3" title="Export mix as MP3" disabled={!clips.length || !!busy} onClick={() => void exportMix()}><Download className="size-4" /></Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-9" aria-label="Project file menu" title="Save, open, export"><FolderOpen className="size-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-xl">
+            <DropdownMenuItem disabled={!!busy} onSelect={() => void saveProject()}><Save className="size-4" />Save project</DropdownMenuItem>
+            <DropdownMenuItem disabled={!!busy} onSelect={() => void openProjects()}><FolderOpen className="size-4" />Open saved project</DropdownMenuItem>
+            <DropdownMenuItem disabled={!clips.length || !!busy} onSelect={() => void exportMix()}><Download className="size-4" />Export mix as MP3</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button size="sm" onClick={() => fileRef.current?.click()}><Plus />Add audio</Button>
         <input ref={fileRef} type="file" accept="audio/*" multiple hidden onChange={e => { void importFiles(e.target.files); e.target.value = ""; }} />
       </div>
