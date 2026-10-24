@@ -406,21 +406,42 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
         <input type="number" min={60} max={200} step={0.1} value={bpm} aria-label="Project tempo" onChange={e => { const v = Number(e.target.value); if (v >= 30 && v <= 300) setBpm(v); }} className="w-16 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-sm text-foreground" />
       </label>
       <div className="flex items-center gap-1">
-        <Button variant={!cutTool && !eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Selection tool" aria-pressed={!cutTool && !eraseTool} onClick={() => { setCutTool(false); setEraseTool(false); }}><MousePointer2 className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Split at playhead (S)" disabled={!clips.length} onClick={split}><SplitSquareHorizontal className="size-4" /></Button>
-        <Button variant={cutTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Scissors tool: tap a clip to split it there" aria-pressed={cutTool} disabled={!clips.length} onClick={() => { setCutTool(v => !v); setEraseTool(false); }}><Scissors className="size-4 -rotate-90" /></Button>
-        <Button variant={eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Eraser tool: tap a clip to delete it" aria-pressed={eraseTool} disabled={!clips.length} onClick={() => { setEraseTool(v => !v); setCutTool(false); }}><Eraser className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Tap tempo: tap in time to map the beat" onClick={tapTempo} title="Beat mapper — tap in time with the music"><Activity className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Cut clip" disabled={!selected} onClick={cutSel}><Scissors className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Copy clip" disabled={!selected} onClick={copySel}><Copy className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Paste at playhead" disabled={!hasClip} onClick={paste}><ClipboardPaste className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Duplicate clip" disabled={!selected} onClick={duplicate}><CopyPlus className="size-4" /></Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant={cutTool || eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Editing tools" title="Editing tools">
+              {cutTool ? <Scissors className="size-4 -rotate-90" /> : eraseTool ? <Eraser className="size-4" /> : <MousePointer2 className="size-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="rounded-xl">
+            <DropdownMenuItem aria-pressed={!cutTool && !eraseTool} onSelect={() => { setCutTool(false); setEraseTool(false); }}><MousePointer2 className="size-4" />Selection{!cutTool && !eraseTool ? " ✓" : ""}</DropdownMenuItem>
+            <DropdownMenuItem aria-pressed={cutTool} disabled={!clips.length} onSelect={() => { setCutTool(v => !v); setEraseTool(false); }}><Scissors className="size-4 -rotate-90" />Scissors — tap a clip to split{cutTool ? " ✓" : ""}</DropdownMenuItem>
+            <DropdownMenuItem aria-pressed={eraseTool} disabled={!clips.length} onSelect={() => { setEraseTool(v => !v); setCutTool(false); }}><Eraser className="size-4" />Eraser — tap a clip to delete{eraseTool ? " ✓" : ""}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={tapTempo}><Activity className="size-4" />Tap tempo — map the beat</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="size-9" aria-label="Clip edit menu" title="Split, cut, copy, paste, duplicate"><Copy className="size-4" /></Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="rounded-xl">
+            <DropdownMenuItem disabled={!clips.length} onSelect={split}><SplitSquareHorizontal className="size-4" />Split at playhead</DropdownMenuItem>
+            <DropdownMenuItem disabled={!selected} onSelect={cutSel}><Scissors className="size-4" />Cut clip</DropdownMenuItem>
+            <DropdownMenuItem disabled={!selected} onSelect={copySel}><Copy className="size-4" />Copy clip</DropdownMenuItem>
+            <DropdownMenuItem disabled={!hasClip} onSelect={paste}><ClipboardPaste className="size-4" />Paste at playhead</DropdownMenuItem>
+            <DropdownMenuItem disabled={!selected} onSelect={duplicate}><CopyPlus className="size-4" />Duplicate clip</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <div className="flex items-center gap-1">
-        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom out" onClick={() => setPx(p => Math.max(6, p / 1.5))}><ZoomOut className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom in" onClick={() => setPx(p => Math.min(4096, p * 1.5))}><ZoomIn className="size-4" /></Button>
-        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom in centered on the playhead" title="Zoom to playhead" onClick={() => { const el = scrollRef.current; if (!el) return; const next = Math.min(4096, zoomRef.current * 2); zoomRef.current = next; setPx(next); requestAnimationFrame(() => { el.scrollLeft = Math.max(0, (head / beatSec) * next - el.clientWidth / 2); }); }}><Crosshair className="size-4" /></Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="size-9" aria-label="Zoom menu" title="Zoom"><ZoomIn className="size-4" /></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="rounded-xl">
+          <DropdownMenuItem onSelect={() => setPx(p => Math.min(4096, p * 1.5))}><ZoomIn className="size-4" />Zoom in</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setPx(p => Math.max(6, p / 1.5))}><ZoomOut className="size-4" />Zoom out</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => { const el = scrollRef.current; if (!el) return; const next = Math.min(4096, zoomRef.current * 2); zoomRef.current = next; setPx(next); requestAnimationFrame(() => { el.scrollLeft = Math.max(0, (head / beatSec) * next - el.clientWidth / 2); }); }}><Crosshair className="size-4" />Zoom to playhead</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button variant="outline" size="icon" className="size-9" aria-label="Add lane" onClick={() => setLaneCount(lanes + 1)}><Plus className="size-4" /></Button>
       <Button variant="outline" size="icon" className="size-9" aria-label="Track FX and pitch" disabled={!selected} onClick={() => setEditOpen(v => !v)}><SlidersHorizontal className="size-4" /></Button>
       <Button variant="outline" size="icon" className="size-9" aria-label="Sync selected clip to project beats" disabled={!selected} onClick={() => { if (selected) update(selected.id, syncClip(selected, bpm)); }}><Link2 className="size-4" /></Button>
