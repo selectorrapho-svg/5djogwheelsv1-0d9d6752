@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "1ff13962-2f7e-4e13-9ece-d4066a843377",
-  "project_id": "33af6b1f-a0f8-4bce-ac86-50221c2e1e70",
-  "url": "/__l5e/assets-v1/1ff13962-2f7e-4e13-9ece-d4066a843377/BIG_TUNES.mp3",
-  "r2_key": "a/v1/33af6b1f-a0f8-4bce-ac86-50221c2e1e70/1ff13962-2f7e-4e13-9ece-d4066a843377/BIG_TUNES.mp3",
-  "original_filename": "BIG_TUNES.mp3",
-  "size": 248782,
   "content_type": "audio/mpeg",
-  "created_at": "2026-10-21T16:08:03Z"
+  "created_at": "2026-10-21T16:08:03Z",
+  "original_filename": "BIG_TUNES.mp3",
+  "project_id": "813dd21e-7dfa-4463-9d2d-15484893e07e",
+  "r2_key": "a/v1/813dd21e-7dfa-4463-9d2d-15484893e07e/1ff13962-2f7e-4e13-9ece-d4066a843377/BIG_TUNES.mp3",
+  "size": 248782,
+  "url": "/__l5e/assets-v1/1ff13962-2f7e-4e13-9ece-d4066a843377/BIG_TUNES.mp3",
+  "version": 1
 }
