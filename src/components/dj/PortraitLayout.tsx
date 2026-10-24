@@ -18,7 +18,7 @@ import { Play, Music, Sliders, Activity, Grid3x3, X, Repeat, Disc3, ChevronLeft,
 import { SyncButton } from "./SyncButton";
 import { TrackLibraryOverlay } from "./TrackLibraryOverlay";
 import { Button } from "@/components/ui/button";
-import brandLogo from "@/assets/djogwheels-user-logo-cropped.png";
+import brandLogo from "@/assets/mix4deejays-logo-transparent.png";
 import { useState, useRef, useEffect } from "react";
 import { DeckSlider } from "./DeckSlider";
 import { PreCueButton } from "./PreCueButton";
