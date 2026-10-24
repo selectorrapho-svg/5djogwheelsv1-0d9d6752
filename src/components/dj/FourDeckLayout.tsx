@@ -157,14 +157,10 @@ export function FourDeckLayout({
             if (rec) {
               const blob = await mixer.stopRecord();
               setRec(false);
-              if (blob) {
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = `djogpro-mix.${blob.type.includes("mp4") ? "mp4" : "webm"}`;
-                a.click();
-              }
+              downloadBlob(blob);
             } else {
-              mixer.startRecord();
+              const limited = !isPro() && mixer.recordOptions.kind === "video";
+              mixer.startRecord(limited ? { ...mixer.recordOptions, maxMs: FREE_VIDEO_LIMIT_MS } : undefined);
               setRec(true);
             }
           }}
