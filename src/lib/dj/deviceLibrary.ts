@@ -1,7 +1,33 @@
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { LIBRARY, type LibraryTrack } from '@/assets/library';
 import { readAlbumArt } from './albumArt';
+import { isPro } from './license';
 
-export type DeviceTrack = LibraryTrack & { file?: File; handle?: FileSystemFileHandle; kind?: 'audio' | 'video'; native?: boolean; artworkUrl?: string | null; bpm?: number; firstBeat?: number };
+export type DeviceTrack = LibraryTrack & { file?: File; handle?: FileSystemFileHandle; kind?: 'audio' | 'video'; native?: boolean; artworkUrl?: string | null; bpm?: number; firstBeat?: number; stored?: boolean };
+
+/** Imported tracks live here forever until the user deletes them. */
+const LIBRARY_DIR = 'duigsstudio/library';
+/** Free accounts keep this many imported tracks; PRO is unlimited. */
+export const FREE_IMPORT_LIMIT = 5;
+
+async function ensureLibraryDir() {
+  try { await Filesystem.mkdir({ path: LIBRARY_DIR, directory: Directory.Documents, recursive: true }); } catch { /* exists */ }
+}
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read file'));
+    reader.readAsDataURL(blob);
+  });
+}
+function base64ToFile(base64: string, name: string, type: string): File {
+  const bin = atob(base64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return new File([out], name, { type });
+}
+function safeFileName(name: string) { return name.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 120) || 'track'; }
 type DirectoryPicker = () => Promise<FileSystemDirectoryHandle>;
 const CACHE_KEY = 'mixrdjspro-library-directory';
 let tracks: DeviceTrack[] = [...LIBRARY];
