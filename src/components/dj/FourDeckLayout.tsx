@@ -123,6 +123,29 @@ export function FourDeckLayout({
   const [rec, setRec] = useState(false);
   const [topVisible, setTopVisible] = useState(false);
   const order: Deck[] = [mixer.decks.A, mixer.decks.B, mixer.decks.C, mixer.decks.D];
+
+  const downloadBlob = (blob: Blob | null) => {
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `djogpro-mix.${blob.type.includes("mp4") ? "mp4" : "webm"}`;
+    a.click();
+  };
+
+  // Free video limit: the engine stops by itself at 5 minutes — save the take.
+  useEffect(() => {
+    if (!rec) return;
+    const t = setInterval(() => {
+      if (!mixer.recorder) {
+        setRec(false);
+        const blob = mixer.autoStoppedBlob;
+        mixer.autoStoppedBlob = null;
+        downloadBlob(blob);
+      }
+    }, 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rec, mixer]);
   return (
     <div className="fixed inset-0 bg-background text-foreground select-none overflow-hidden flex flex-col">
       <div data-dj-topbar className="h-11 shrink-0 flex items-center justify-center gap-8 border-b border-border">
