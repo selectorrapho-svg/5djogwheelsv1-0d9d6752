@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SlidersVertical, LayoutGrid, Play, Pause, Music } from "lucide-react";
 import type { Deck, Mixer } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
+import { isPro } from "@/lib/dj/license";
+import { FREE_VIDEO_LIMIT_MS } from "@/lib/dj/recording";
 import { Waveform, TrackOverview } from "./Waveform";
 import { Crossfader } from "./Crossfader";
 import { SettingsPanel } from "./SettingsPanel";
