@@ -25,3 +25,5 @@
 - [ ] New settings icon; remove orange accent app-wide
 - [ ] Samples & FX button; jogwheel marker turns cue color at cue point
 - [ ] Cue/sample pads overlay restyle — consistent pad design
+- [ ] Stems/EQ knobs as floating overlay panel over deck waveform (Serato-style reference images)
+- [ ] Dark RGB waveform UI polish to match references; pad-mode dropdown menu
