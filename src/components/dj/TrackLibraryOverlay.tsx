@@ -114,6 +114,7 @@ export function TrackLibraryOverlay({ open, onClose, deck, mixer, queueOnly = fa
               <button className="flex w-full items-center gap-2 border-t border-border px-3 py-2" onClick={() => { deviceLibrary.addQueue(track); setMenu(null); }}><ListPlus className="size-4" />Add to Queue</button>
               <button className="flex w-full items-center gap-2 px-3 py-2" onClick={() => addPlaylist([track])}><ListMusic className="size-4" />Add to Playlist…</button>
               <button className="flex w-full items-center gap-2 px-3 py-2" onClick={() => { void previewTrack(track).catch(() => setError('Preview unavailable for this track.')); setMenu(null); }}><Play className="size-4" />Preview</button>
+              {track.stored && <button className="flex w-full items-center gap-2 border-t border-border px-3 py-2 text-destructive" onClick={() => { void deviceLibrary.removeTrack(track); setMenu(null); }}><X className="size-4" />Delete from device</button>}
             </div>}
           </div>
         </div>)}
@@ -121,7 +122,7 @@ export function TrackLibraryOverlay({ open, onClose, deck, mixer, queueOnly = fa
         {tab !== 'Streaming' && !visible.length && <p className="px-4 py-8 text-center text-sm text-muted-foreground">No tracks here yet. Open a music folder or choose files.</p>}
       </div>
       <footer className="flex items-center justify-between border-t border-border bg-secondary px-4 py-3 text-xs text-muted-foreground"><span>{busy ? <LoaderCircle className="size-4 animate-spin" /> : `${visible.length} tracks`}</span><button className="flex items-center gap-2 text-primary" onClick={scan}><FolderOpen className="size-4" />Browse device</button></footer>
-      <input ref={files} type="file" accept="audio/*,video/*,.mp3,.aac,.m4a,.wav,.flac,.ogg,.mp4,.webm,.mov" multiple className="hidden" onChange={e => { void deviceLibrary.addFiles(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
+      <input ref={files} type="file" accept="audio/*,video/*,.mp3,.aac,.m4a,.wav,.flac,.ogg,.mp4,.webm,.mov" multiple className="hidden" onChange={e => { void deviceLibrary.addFiles(Array.from(e.target.files ?? [])).catch(err => setError(err instanceof Error ? err.message : 'Could not import these files.')); e.target.value = ''; }} />
     </section>
   </div></Portal>;
 }

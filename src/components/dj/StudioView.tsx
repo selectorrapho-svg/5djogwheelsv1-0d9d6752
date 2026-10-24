@@ -4,7 +4,7 @@ import { computeBandedPeaks } from "@/lib/dj/engine";
 import { buildRgbStrip } from "@/lib/dj/rgbWave";
 import { Button } from "@/components/ui/button";
 import type { Mixer } from "@/lib/dj/engine";
-import { splitClip, trimClip, clipSource, clipDuration, studioGridStep, studioPitch, studioPlacement, syncClip, studioDuration, studioSchedule, studioWav, type StudioClip } from "@/lib/dj/studio";
+import { splitClip, trimClip, clipSource, clipDuration, studioGridStep, studioPitch, studioPlacement, syncClip, studioDuration, studioSchedule, type StudioClip } from "@/lib/dj/studio";
 import { connectStudioFx, prepareStudioClip } from "@/lib/dj/studioAudio";
 import { saveStudioProject, listStudioProjects, loadStudioProject, saveRecording, type StudioProjectInfo } from '@/lib/dj/studioStorage';
 import { Input } from '@/components/ui/input';
@@ -338,11 +338,14 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
       const src = off.createBufferSource(); src.buffer = await prepareStudioClip(s.clip);
       connectStudioFx(off, src, off.destination, s.clip, s.delay, clipDuration(s.clip) - s.offset); src.start(s.delay, s.offset);
     }
-    const blob = studioWav(await off.startRendering());
+    const rendered = await off.startRendering();
+    setBusy("Encoding MP3…");
+    const { bufferToMp3 } = await import("@/lib/dj/mp3");
+    const blob = bufferToMp3(rendered);
     const path = await saveRecording(`${projectName}-mix`, blob);
     setFileStatus(`Saved ${path}`);
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "studio-mix.wav"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = "studio-mix.mp3"; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     setBusy("");
     } catch { setBusy("Could not export audio"); }
@@ -375,7 +378,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon" className="size-9" aria-label="Save project" title="Save project" disabled={!!busy} onClick={() => void saveProject()}><Save className="size-4" /></Button>
         <Button variant="ghost" size="icon" className="size-9" aria-label="Open saved project" title="Open saved project" disabled={!!busy} onClick={() => void openProjects()}><FolderOpen className="size-4" /></Button>
-        <Button variant="ghost" size="icon" className="size-9" aria-label="Export mix as WAV" disabled={!clips.length || !!busy} onClick={() => void exportMix()}><Download className="size-4" /></Button>
+        <Button variant="ghost" size="icon" className="size-9" aria-label="Export mix as MP3" title="Export mix as MP3" disabled={!clips.length || !!busy} onClick={() => void exportMix()}><Download className="size-4" /></Button>
         <Button size="sm" onClick={() => fileRef.current?.click()}><Plus />Add audio</Button>
         <input ref={fileRef} type="file" accept="audio/*" multiple hidden onChange={e => { void importFiles(e.target.files); e.target.value = ""; }} />
       </div>
