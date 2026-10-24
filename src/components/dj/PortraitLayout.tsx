@@ -138,7 +138,7 @@ export function PortraitLayout({
   return (
     <div className="fixed inset-0 bg-background text-foreground flex flex-col overflow-hidden select-none">
       <div data-dj-topbar className="flex items-center justify-between h-11 shrink-0 gap-2 border-b border-border px-3">
-        <img src={brandLogo} alt="djogwheels PRO" className="h-9 w-28 object-contain" />
+        <img src={brandLogo} alt="mix4deejays" className="h-9 w-28 object-contain" />
         <div className="flex items-center gap-2"><WaveformOptions topVisible={topVisible} onTopVisible={setTopVisible} /><Button variant="ghost" size="icon" onClick={() => setLibraryDeck(deckLeft)} title="Library" aria-label="Open library"><Library /></Button><SettingsPanel mode={mode} setMode={setMode} onAutomix={onAutomix} /><ThemeToggle /></div>
       </div>
       {topVisible && <TopWaveforms decks={[deckLeft, deckRight]} />}
