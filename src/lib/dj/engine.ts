@@ -1358,6 +1358,17 @@ export class Mixer {
       d.cueTap.connect(this.cueBus);
       d.onCueChange = () => this.routeCue();
     }
+
+    // Connecting/disconnecting Bluetooth or headset outputs interrupts the
+    // audio context on Android; without recovery the whole app looks frozen.
+    const recover = () => {
+      const state = this.ctx.state as string;
+      if (state === "interrupted" || state === "suspended") void this.ctx.resume().catch(() => {});
+    };
+    this.ctx.onstatechange = recover;
+    navigator.mediaDevices?.addEventListener?.("devicechange", recover);
+    // Some WebViews only allow resume inside a user gesture — retry on touch.
+    window.addEventListener("pointerdown", recover, { passive: true });
     this.setCrossfade(0.5);
   }
 
