@@ -1,2 +1,0 @@
-CREATE TRIGGER dj_profile_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.create_dj_profile();
-CREATE TRIGGER verified_dj_admin_phone AFTER INSERT OR UPDATE OF phone,phone_confirmed_at ON auth.users FOR EACH ROW EXECUTE FUNCTION public.verified_dj_admin();
