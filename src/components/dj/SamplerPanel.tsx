@@ -29,8 +29,9 @@ export function SamplerPanel({
   useEffect(() => { if (open || inline) void sampleLibrary.restore().catch(() => {}); }, [open, inline]);
 
   const pack = packs.find((p) => p.id === packId) ?? packs[0];
-  const pages = Math.max(1, Math.ceil(pack.samples.length / 16));
-  const pads: (Sample | null)[] = Array.from({ length: 16 }, (_, i) => pack.samples[page * 16 + i] ?? null);
+  const padCount = inline ? 4 : 16;
+  const pages = Math.max(1, Math.ceil(pack.samples.length / padCount));
+  const pads: (Sample | null)[] = Array.from({ length: padCount }, (_, i) => pack.samples[page * padCount + i] ?? null);
 
   const trigger = (p: Sample, i: number) => {
     if (!mixer) return;
@@ -59,14 +60,15 @@ export function SamplerPanel({
               </div>
             )}
           </div>
+          <Button variant="ghost" size="icon" className="size-6" aria-label="Previous sample bank" onClick={() => setPage(p => (p - 1 + pages) % pages)}>‹</Button><span className="text-muted-foreground tabular-nums">{page + 1}/{pages}</span><Button variant="ghost" size="icon" className="size-6" aria-label="Next sample bank" onClick={() => setPage(p => (p + 1) % pages)}>›</Button>
           <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-border bg-secondary p-1" aria-label="Add samples"><Plus className="w-3 h-3" /></button>
           <input ref={fileRef} type="file" accept="audio/*" multiple className="hidden"
             onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; void sampleLibrary.add(f).then(() => { setPackId("mine"); setPage(0); }); }} />
         </div>
-        <div className="sampler-grid grid grid-cols-8 gap-1">
+        <div className="sampler-grid grid grid-cols-4 gap-1" aria-label="Video sample pads">
           {pads.map((p, i) => (
             <Button variant="ghost" key={i} disabled={!p} onPointerDown={() => p && trigger(p, i)}
-              data-active={hit === i} className={`performance-pad animated-pad pad-tone-${i % 4} h-auto px-0.5 py-1 text-[8px] font-medium uppercase disabled:opacity-30`}>
+              data-active={hit === i} className={`performance-pad animated-pad pad-tone-${i % 4} h-8 min-w-0 truncate px-0.5 py-1 text-[8px] font-medium uppercase disabled:opacity-30`}>
               {p?.label ?? i + 1}
             </Button>
           ))}

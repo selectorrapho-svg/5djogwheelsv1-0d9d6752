@@ -2,6 +2,7 @@ import { computeBandedPeaks, type BandedPeaks } from "./peaks";
 import { analyzeWaveform } from "./waveAnalysis";
 import { native, isNative } from "./nativeAudio";
 import { ScratchPlayer } from "./scratchPlayer";
+import { VideoSeekController } from "./videoSeek";
 import { correctedGrid, snapToBeat } from "./beatGrid";
 import { crossfaderGains, freeSpinTau, DEFAULT_SCRATCH, type ScratchSettings, type XfCurve } from "./scratchMath";
 const scratchCfg = (): ScratchSettings => ({ ...DEFAULT_SCRATCH, ...((globalThis as { __djScratch?: Partial<ScratchSettings> }).__djScratch ?? {}) });
@@ -341,7 +342,7 @@ export class Deck {
 
     // Loop watcher — seamlessly wraps playback back to loopStart when looping.
     const loopTick = () => {
-      if (this.loopActive && this.playing && this.loopEnd > this.loopStart) {
+      if (this.loopActive && this.playing && !this.scratching && this.loopEnd > this.loopStart) {
         if (this.currentTime >= this.loopEnd) {
           this.seek(this.loopStart);
         }
@@ -430,6 +431,7 @@ export class Deck {
     this.wavePeaks = null;
     this.trackName = name;
     this.coverUrl = coverUrl;
+    this.videoSeeker.dispose();
     this.videoEl?.pause();
     this.videoEl = null;
     if (/\.(mp4|webm|mov|m4v|3gp|mkv)(?:$|\?)/i.test(url) || /video/i.test(url)) {
@@ -642,7 +644,7 @@ export class Deck {
     if (!this.buffer && this.videoEl) {
       this.playing = true;
       this.videoEl.muted = false;
-      if (Math.abs(this.videoEl.currentTime - this.pausedAt) > 0.08) this.videoEl.currentTime = this.pausedAt;
+      this.videoSeeker.request(this.videoEl, this.pausedAt, () => this.playing && !this.scratching);
       this.videoEl.playbackRate = this.rate;
       this.videoEl.play().catch(() => { this.playing = false; this.emit(); });
       this.emit();
@@ -676,7 +678,7 @@ export class Deck {
     this.playing = true;
     native.play(this.id, this.pausedAt, this.rate);
     if (this.videoEl) {
-      if (Math.abs(this.videoEl.currentTime - this.pausedAt) > 0.08) this.videoEl.currentTime = this.pausedAt;
+      this.videoSeeker.request(this.videoEl, this.pausedAt, () => this.playing && !this.scratching);
       this.videoEl.playbackRate = this.rate;
       this.videoEl.muted = true;
       this.videoEl.play().catch(() => {});
@@ -714,7 +716,7 @@ export class Deck {
     const wasPlaying = this.playing;
     if (wasPlaying) this.pause();
     this.pausedAt = Math.max(0, Math.min(this.duration, t));
-    if (this.videoEl && !this.videoEl.seeking) this.videoEl.currentTime = this.pausedAt;
+    if (this.videoEl) this.videoSeeker.request(this.videoEl, this.pausedAt, () => this.playing && !this.scratching);
     if (wasPlaying) this.play();
     else this.emit();
   }
@@ -1228,21 +1230,12 @@ export class Deck {
     window.setTimeout(() => { if (token === this.releaseToken) this.endScratch(); }, Math.min(12000, ms + 30));
   }
 
+  private videoSeeker = new VideoSeekController();
   private scrubVideo() {
     const v = this.videoEl;
     if (!v || !this.scratching) return;
-    try {
-      if (!v.paused) v.pause();
-      this.videoScrubTarget = Math.max(0, Math.min(this.duration - 0.05, this.scratchPos));
-      if (v.seeking || this.videoSeekQueued) return;
-      if (Math.abs(v.currentTime - this.videoScrubTarget) < 0.034) return;
-      this.videoSeekQueued = true;
-      v.addEventListener("seeked", () => {
-        this.videoSeekQueued = false;
-        if (this.scratching && Math.abs(v.currentTime - this.videoScrubTarget) > 0.034) this.scrubVideo();
-      }, { once: true });
-      v.currentTime = this.videoScrubTarget;
-    } catch { this.videoSeekQueued = false; }
+    if (!v.paused) v.pause();
+    this.videoSeeker.request(v, this.scratchPos, () => this.playing && !this.scratching);
   }
 
   /** Gentle audio→video drift correction during normal playback. */
@@ -1258,7 +1251,7 @@ export class Deck {
       if (v.seeking) return;
       const drift = this.currentTime - v.currentTime; // + = video behind
       if (Math.abs(drift) > 0.25) {
-        v.currentTime = this.currentTime;
+        this.videoSeeker.request(v, this.currentTime, () => this.playing && !this.scratching);
         v.playbackRate = this.rate;
       } else if (Math.abs(drift) > 0.05) {
         // Nudge speed instead of seeking — no visible jumps.
@@ -1282,7 +1275,7 @@ export class Deck {
     this.pausedAt = Math.max(0, Math.min(this.duration, this.scratchPos));
     if (this.videoEl) {
       this.videoEl.playbackRate = this.rate;
-      if (!this.wasPlayingBeforeScratch && !this.videoEl.seeking) this.videoEl.currentTime = this.pausedAt;
+      this.videoSeeker.request(this.videoEl, this.pausedAt, () => this.playing && !this.scratching);
     }
     if (this.wasPlayingBeforeScratch) {
       this.play();

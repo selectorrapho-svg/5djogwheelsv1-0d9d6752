@@ -11,7 +11,7 @@ export interface StudioClip {
   stretch?: number;
   pitch?: number;
   reverse?: boolean;
-  fx?: "none" | "lowpass" | "highpass" | "echo" | "drive";
+  fx?: string;
   /** Independent volume fades in seconds (applied to the audible slice). */
   fadeIn?: number;
   fadeOut?: number;

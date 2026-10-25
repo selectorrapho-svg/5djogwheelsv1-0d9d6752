@@ -1,4 +1,5 @@
 import { clipDuration, studioFades, type StudioClip } from "./studio";
+import { studioFxPreset } from "./studioFx";
 
 const cache = new WeakMap<AudioBuffer, Map<string, Promise<AudioBuffer>>>();
 export function prepareStudioClip(clip: StudioClip): Promise<AudioBuffer> {
@@ -41,17 +42,30 @@ export function connectStudioFx(ctx: BaseAudioContext, input: AudioNode, output:
     gain.gain.setValueAtTime(clip.gain, fadeOutStart);
     gain.gain.linearRampToValueAtTime(0.0001, fadeOutEnd);
   }
-  if (clip.fx === "lowpass" || clip.fx === "highpass") {
-    const filter = ctx.createBiquadFilter(); filter.type = clip.fx; filter.frequency.value = clip.fx === "lowpass" ? 1800 : 600;
+  const preset = studioFxPreset(clip.fx);
+  const variant = preset?.variant ?? 0;
+  if (preset && ["lowpass", "highpass", "bandpass", "notch"].includes(preset.family)) {
+    const filter = ctx.createBiquadFilter();
+    filter.type = preset.family as BiquadFilterType;
+    filter.frequency.value = 200 * Math.pow(1.65, variant);
+    filter.Q.value = 0.7 + variant * 0.8;
     gain.connect(filter).connect(output); nodes.push(filter);
-  } else if (clip.fx === "echo") {
-    const delay = ctx.createDelay(1), wet = ctx.createGain(); delay.delayTime.value = 0.25; wet.gain.value = 0.35;
+  } else if (preset?.family === "echo") {
+    const delay = ctx.createDelay(2), wet = ctx.createGain();
+    delay.delayTime.value = 0.0625 * (variant + 1); wet.gain.value = 0.15 + variant * 0.07;
     gain.connect(output); gain.connect(delay).connect(wet).connect(output); nodes.push(delay, wet);
-  } else if (clip.fx === "drive") {
+  } else if (preset?.family === "drive") {
     const shape = ctx.createWaveShaper(), curve = new Float32Array(2048);
-    for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh((i * 2 / (curve.length - 1) - 1) * 3);
+    const amount = 1.5 + variant;
+    for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh((i * 2 / (curve.length - 1) - 1) * amount) / Math.tanh(amount);
     shape.curve = curve; shape.oversample = "2x";
     gain.connect(shape).connect(output); nodes.push(shape);
+  } else if (preset?.family === "tremolo") {
+    const mod = ctx.createGain(), depth = ctx.createGain(), osc = ctx.createOscillator();
+    mod.gain.value = 0.65; depth.gain.value = 0.35;
+    osc.frequency.value = 1 + variant * 1.5;
+    osc.connect(depth).connect(mod.gain); gain.connect(mod).connect(output);
+    osc.start(when); osc.stop(when + audibleSeconds + 0.5); nodes.push(mod, depth, osc);
   } else gain.connect(output);
   return nodes;
 }

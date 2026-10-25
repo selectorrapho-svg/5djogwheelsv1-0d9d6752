@@ -61,6 +61,10 @@ export interface DjSettings {
   waveSlip: boolean;
   waveZoom: number;
   waveTracks: 1 | 2 | 3;
+  videoFxEnabled: boolean;
+  videoFxAmount: number;
+  transitionEnabled: boolean;
+  transitionAmount: number;
   visualPreset: string;
   transitionPreset: string;
   fxFavorites: string[];
@@ -96,6 +100,10 @@ const DEFAULT: DjSettings = {
   waveSlip: false,
   waveZoom: 1,
   waveTracks: 1,
+  videoFxEnabled: true,
+  videoFxAmount: 1,
+  transitionEnabled: true,
+  transitionAmount: 1,
   visualPreset: "none",
   transitionPreset: "legacy",
   fxFavorites: [],

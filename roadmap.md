@@ -1,5 +1,13 @@
 # Task roadmap
 
+## Current request — video performance
+- [ ] Make Studio menus visible and extend track/event effects
+- [ ] Fix video seeking during scratch, loops and hot cues
+- [ ] Add video FX/transition on/off, amount knobs, next and fullscreen controls
+- [ ] Compact video samples to four pads with banks
+- [ ] Add hot cues and pitch cues inside S in both layouts
+- [ ] Import supplied templates — blocked: no attachment received
+
 ## Phase 1 — Auth & accounts
 - [ ] Remove Google + Lovable sign-in; phone number + password only
 - [ ] Admin: 0745260364 / selectorrapho@gmail.com get PRO unlocked via user_roles (never hardcode passwords in code)

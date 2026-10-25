@@ -12,6 +12,7 @@ import { connectMidi, subscribeMidi, MidiInfo } from "@/lib/dj/midi";
 import { Portal } from "./Portal";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AccountPanel } from "./AccountPanel";
 import { isPro, whatsappPayUrl, useLicense } from "@/lib/dj/license";
 import settingsArtwork from "@/assets/djogwheels-splash-clean.jpg";
@@ -123,6 +124,14 @@ export function SettingsPanel({
 
   return (
     <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 rounded-full dj-glass" aria-label="App mode menu" title="Mix, video, Studio"><Layers className="size-4" /></Button></DropdownMenuTrigger>
+        <DropdownMenuContent className="z-[410]" align="end">
+          <DropdownMenuItem onSelect={() => setMode("mix")}><Music2 />Mix mode</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setMode("video")}><Video />Video mode</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => window.dispatchEvent(new Event("dj:studio"))}><FileAudio />Studio mode</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Button variant="ghost" size="icon"
         onClick={() => { setPage("menu"); setOpen(true); }}
         className="w-8 h-8 rounded-full flex items-center justify-center dj-glass"
