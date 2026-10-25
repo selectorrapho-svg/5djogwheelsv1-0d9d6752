@@ -5,6 +5,7 @@ import { buildRgbStrip } from "@/lib/dj/rgbWave";
 import { Button } from "@/components/ui/button";
 import type { Mixer } from "@/lib/dj/engine";
 import { splitClip, trimClip, clipSource, clipDuration, studioGridStep, studioPitch, studioPlacement, syncClip, studioDuration, studioSchedule, type StudioClip } from "@/lib/dj/studio";
+import { STUDIO_FX, studioFxPreset } from "@/lib/dj/studioFx";
 import { connectStudioFx, prepareStudioClip } from "@/lib/dj/studioAudio";
 import { saveStudioProject, listStudioProjects, loadStudioProject, saveRecording, type StudioProjectInfo } from '@/lib/dj/studioStorage';
 import { Input } from '@/components/ui/input';
@@ -381,7 +382,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="size-9" aria-label="Project file menu" title="Save, open, export"><FolderOpen className="size-4" /></Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="rounded-xl">
+          <DropdownMenuContent align="end" className="z-[410] rounded-md">
             <DropdownMenuItem disabled={!!busy} onSelect={() => void saveProject()}><Save className="size-4" />Save project</DropdownMenuItem>
             <DropdownMenuItem disabled={!!busy} onSelect={() => void openProjects()}><FolderOpen className="size-4" />Open saved project</DropdownMenuItem>
             <DropdownMenuItem disabled={!clips.length || !!busy} onSelect={() => void exportMix()}><Download className="size-4" />Export mix as MP3</DropdownMenuItem>
@@ -412,7 +413,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
               {cutTool ? <Scissors className="size-4 -rotate-90" /> : eraseTool ? <Eraser className="size-4" /> : <MousePointer2 className="size-4" />}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="rounded-xl">
+          <DropdownMenuContent align="start" className="z-[410] rounded-md">
             <DropdownMenuItem aria-pressed={!cutTool && !eraseTool} onSelect={() => { setCutTool(false); setEraseTool(false); }}><MousePointer2 className="size-4" />Selection{!cutTool && !eraseTool ? " ✓" : ""}</DropdownMenuItem>
             <DropdownMenuItem aria-pressed={cutTool} disabled={!clips.length} onSelect={() => { setCutTool(v => !v); setEraseTool(false); }}><Scissors className="size-4 -rotate-90" />Scissors — tap a clip to split{cutTool ? " ✓" : ""}</DropdownMenuItem>
             <DropdownMenuItem aria-pressed={eraseTool} disabled={!clips.length} onSelect={() => { setEraseTool(v => !v); setCutTool(false); }}><Eraser className="size-4" />Eraser — tap a clip to delete{eraseTool ? " ✓" : ""}</DropdownMenuItem>
@@ -423,7 +424,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" className="size-9" aria-label="Clip edit menu" title="Split, cut, copy, paste, duplicate"><Copy className="size-4" /></Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="rounded-xl">
+          <DropdownMenuContent align="start" className="z-[410] rounded-md">
             <DropdownMenuItem disabled={!clips.length} onSelect={split}><SplitSquareHorizontal className="size-4" />Split at playhead</DropdownMenuItem>
             <DropdownMenuItem disabled={!selected} onSelect={cutSel}><Scissors className="size-4" />Cut clip</DropdownMenuItem>
             <DropdownMenuItem disabled={!selected} onSelect={copySel}><Copy className="size-4" />Copy clip</DropdownMenuItem>
@@ -436,7 +437,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="size-9" aria-label="Zoom menu" title="Zoom"><ZoomIn className="size-4" /></Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="rounded-xl">
+        <DropdownMenuContent align="start" className="z-[410] rounded-md">
           <DropdownMenuItem onSelect={() => setPx(p => Math.min(4096, p * 1.5))}><ZoomIn className="size-4" />Zoom in</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setPx(p => Math.max(6, p / 1.5))}><ZoomOut className="size-4" />Zoom out</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => { const el = scrollRef.current; if (!el) return; const next = Math.min(4096, zoomRef.current * 2); zoomRef.current = next; setPx(next); requestAnimationFrame(() => { el.scrollLeft = Math.max(0, (head / beatSec) * next - el.clientWidth / 2); }); }}><Crosshair className="size-4" />Zoom to playhead</DropdownMenuItem>
@@ -454,7 +455,7 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
         <input aria-label="Clip pitch semitones" type="range" min={-24} max={24} step={1} value={selected.pitch ?? 0} onChange={e => update(selected.id, { pitch: studioPitch(Number(e.target.value)) })} />
         <Button variant="outline" size="icon" className="size-7" aria-label="Pitch up one semitone" onClick={() => update(selected.id, { pitch: studioPitch((selected.pitch ?? 0) + 1) })}><Plus className="size-3.5" /></Button>
         <output className="w-8 tabular-nums">{selected.pitch ?? 0}</output></label>
-      <label className="flex items-center gap-2 text-xs">FX <select aria-label="Track effect" className="rounded border border-border bg-background p-1" value={selected.fx ?? "none"} onChange={e => update(selected.id, { fx: e.target.value as StudioClip["fx"] })}><option value="none">None</option><option value="lowpass">Low pass</option><option value="highpass">High pass</option><option value="echo">Echo</option><option value="drive">Drive</option></select></label>
+      <label className="flex items-center gap-2 text-xs">FX <select aria-label="Track effect" className="rounded border border-border bg-background p-1" value={selected.fx ?? "none"} onChange={e => update(selected.id, { fx: e.target.value as StudioClip["fx"] })}><option value="none">None</option>{selected.fx && studioFxPreset(selected.fx) && !STUDIO_FX.some(p => p.key === selected.fx) && <option value={selected.fx}>{selected.fx}</option>}{[...new Set(STUDIO_FX.map(p => p.category))].map(category => <optgroup key={category} label={category}>{STUDIO_FX.filter(p => p.category === category).map(p => <option key={p.key} value={p.key}>{p.label}</option>)}</optgroup>)}</select></label>
       <label className="flex items-center gap-2 text-xs">Fade in <input aria-label="Fade in seconds" type="range" min={0} max={8} step={0.1} value={selected.fadeIn ?? 0} onDoubleClick={() => update(selected.id, { fadeIn: 0 })} onChange={e => update(selected.id, { fadeIn: Number(e.target.value) })} className="w-16" /><output className="w-9 tabular-nums">{(selected.fadeIn ?? 0).toFixed(1)}s</output></label>
       <label className="flex items-center gap-2 text-xs">Fade out <input aria-label="Fade out seconds" type="range" min={0} max={8} step={0.1} value={selected.fadeOut ?? 0} onDoubleClick={() => update(selected.id, { fadeOut: 0 })} onChange={e => update(selected.id, { fadeOut: Number(e.target.value) })} className="w-16" /><output className="w-9 tabular-nums">{(selected.fadeOut ?? 0).toFixed(1)}s</output></label>
       <Button variant={selected.reverse ? "default" : "outline"} size="sm" onClick={() => update(selected.id, { reverse: !selected.reverse })}><RotateCcw />Reverse</Button>

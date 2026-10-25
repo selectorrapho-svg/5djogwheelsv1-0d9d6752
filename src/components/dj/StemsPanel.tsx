@@ -7,6 +7,7 @@ import logo from "@/assets/mix4deejays-logo.jpg.asset.json";
 import { DeckFxPanel } from "./DeckFxPanel";
 import { useDjSettings } from "@/hooks/useDjSettings";
 import { Knob } from "./Knob";
+import { HotCuePanel } from "./HotCuePanel";
 
 const STEMS: { key: StemKey; label: string }[] = [
   { key: "drums", label: "Drums" },
@@ -20,6 +21,7 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
   useDeck(deck);
   const [djs, setDjs] = useDjSettings();
   const [eq, setEqState] = useState({ filter: 0, high: 0, mid: 0, low: 0 });
+  const [performance, setPerformance] = useState(false);
   const eqMode = djs.stemsEqMode === "eq";
   const status = deck.realStems ? "Separated stems" : deck.stemStatus === "loading" ? "Separating…" : deck.stemStatus === "locked" ? "AI stems · Pro" : "Frequency bands";
   return (
@@ -30,9 +32,11 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
           <button aria-pressed={!eqMode} onClick={() => setDjs({ stemsEqMode: "stems" })}>Stems</button>
           <button aria-pressed={eqMode} onClick={() => setDjs({ stemsEqMode: "eq" })}>EQ</button>
         </div>
+        <Button variant="ghost" className="h-7 px-1 text-[9px]" aria-label={`Hot cues and pitch cues deck ${deck.id}`} aria-pressed={performance} onClick={() => setPerformance(v => !v)}>Cues</Button>
         <DeckFxPanel deck={deck} accent="var(--accent-blue)" compact />
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close stems" className="size-7"><X className="size-3.5" /></Button>
       </div>
+      {performance ? <HotCuePanel deck={deck} accent="var(--control-blue)" inline /> : <>
       <span role="status" className="px-2 pt-1 text-center text-[9px] text-muted-foreground">{eqMode ? `Deck ${deck.id} · EQ` : `Deck ${deck.id} · ${status}`}</span>
       <div className="grid flex-1 grid-cols-4 place-items-center gap-1 px-1 py-2">
         {eqMode
@@ -45,6 +49,7 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
                 onChange={(v) => deck.setStemLevel(key, v)} />
             ))}
       </div>
+      </>}
     </div>
   );
 }
