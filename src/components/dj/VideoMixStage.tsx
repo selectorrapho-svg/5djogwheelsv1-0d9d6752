@@ -3,11 +3,12 @@ import { useDeck, getMixer } from "@/lib/dj/useMixer";
 import { useEffect, useRef, useState } from "react";
 import { useDjSettings, VideoFx, VideoTransition } from "@/hooks/useDjSettings";
 import watermarkLogo from "@/assets/watermark-logo.png";
-import { Move, Minimize2, Maximize2 } from "lucide-react";
+import { Move, Minimize2, Maximize2, Power, SkipForward } from "lucide-react";
 import { recordingProfile } from "@/lib/dj/recording";
 import { VISUAL_PRESETS, TRANSITION_PRESETS, visualFilter, paintVisual, transitionFrame } from "@/lib/dj/videoPresets";
 import { EffectBrowser } from "./EffectBrowser";
 import { Button } from "@/components/ui/button";
+import { Knob } from "./Knob";
 
 /** Canvas CSS filter string for the selected video FX. */
 function fxFilter(fx: VideoFx, t: number) {
@@ -111,7 +112,7 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
     ro.observe(canvas);
 
     const drawCover = (v: HTMLVideoElement, alpha: number, zoom: number, dx: number) => {
-      if (!ctx || !v.videoWidth || alpha <= 0.001) return;
+      if (!ctx || !v.videoWidth || v.readyState < 2 || alpha <= 0.001) return;
       const cw = canvas.width;
       const ch = canvas.height;
       const scale = Math.max(cw / v.videoWidth, ch / v.videoHeight) * (1 + zoom * 0.18);
@@ -130,12 +131,17 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
     let lastSettings = cfg.current;
     let lastPaint = 0;
     const watched = new Map<HTMLVideoElement, number>();
+    const eventCleanup = new Map<HTMLVideoElement, () => void>();
     type RVFC = HTMLVideoElement & {
       requestVideoFrameCallback?: (cb: () => void) => number;
       cancelVideoFrameCallback?: (id: number) => void;
     };
     const watch = (v: HTMLVideoElement | null) => {
-      if (!v || watched.has(v)) return;
+      if (!v || eventCleanup.has(v)) return;
+      const markDirty = () => { dirty = true; };
+      const events = ["seeked", "loadeddata", "canplay", "pause", "play", "timeupdate"];
+      events.forEach(event => v.addEventListener(event, markDirty));
+      eventCleanup.set(v, () => events.forEach(event => v.removeEventListener(event, markDirty)));
       const rv = v as RVFC;
       if (!rv.requestVideoFrameCallback) return;
       const tick = () => {
@@ -155,9 +161,13 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
       watch(deckA.videoEl);
       watch(deckB.videoEl);
       const cross = getMixer()?.lastCross ?? 0.5;
-      const preset = VISUAL_PRESETS.find(p => p.key === s.visualPreset);
-      const transition = TRANSITION_PRESETS.find(p => p.key === s.transitionPreset);
-      const animated = s.videoFx === "strobe" || s.videoFx === "hue" || !!preset;
+      const selectedPreset = s.videoFxEnabled ? VISUAL_PRESETS.find(p => p.key === s.visualPreset) : undefined;
+      const amount = s.videoFxAmount;
+      const preset = selectedPreset && amount > 0 ? { ...selectedPreset, amount: selectedPreset.amount * amount } : undefined;
+      const selectedTransition = s.transitionEnabled ? TRANSITION_PRESETS.find(p => p.key === s.transitionPreset) : undefined;
+      const transition = selectedTransition ? { ...selectedTransition, amount: selectedTransition.amount * s.transitionAmount } : undefined;
+      const activeFx = s.videoFxEnabled && amount > 0 ? s.videoFx : "none";
+      const animated = activeFx === "strobe" || activeFx === "hue" || !!preset;
       if (cross !== lastCross) { lastCross = cross; dirty = true; }
       const mixer = getMixer();
       const profile = mixer?.recorder && mixer.recordOptions.kind === "video" ? recordingProfile(mixer.recordOptions) : null;
@@ -169,7 +179,7 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
         canvas.height = h;
         dirty = true;
       }
-      if (hasRvfc && !dirty && !animated && !getMixer()?.recorder) return;
+      if (hasRvfc && !dirty && !animated && !getMixer()?.recorder && now - lastPaint < 200) return;
       dirty = false;
       lastPaint = now;
 
@@ -180,12 +190,12 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
 
       const x = s.videoFollowCrossfader ? (getMixer()?.lastCross ?? 0.5) : 0.5;
       const m = s.videoFollowCrossfader
-        ? mixFor(s.videoTransition, x)
+        ? mixFor(s.transitionEnabled ? s.videoTransition : "fade", x)
         : { a: 1, b: 0.7, slide: 0, zoom: 0, flash: 0 };
 
-      ctx.filter = preset ? visualFilter(preset, now / 1000) : fxFilter(s.videoFx, now / 1000);
+      ctx.filter = preset ? visualFilter(preset, now / 1000) : fxFilter(activeFx, now / 1000);
       const paint = (video: HTMLVideoElement | null, alpha: number) => {
-        if (!video) return;
+        if (!video || video.readyState < 2) return;
         ctx.save(); ctx.globalAlpha = alpha;
         paintVisual(ctx, video, preset, now / 1000); ctx.restore();
       };
@@ -233,6 +243,8 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
       ro.disconnect();
       watched.forEach((id, v) => (v as RVFC).cancelVideoFrameCallback?.(id));
       watched.clear();
+      eventCleanup.forEach(cleanup => cleanup());
+      eventCleanup.clear();
       if (mixer && mixer.videoCanvas === canvas) mixer.videoCanvas = null;
     };
   }, [deckA, deckB]);
@@ -262,13 +274,45 @@ export function VideoMixStage({ deckA, deckB, embedded = false }: { deckA: Deck;
   const [pos, setPos] = useState({ x: 24, y: 70 });
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const scale = s.videoScale;
+  const [fullscreen, setFullscreen] = useState(false);
   const [browser, setBrowser] = useState<"visual" | "transitions" | null>(null);
-  const controls = <><div className="flex justify-center gap-1 py-1"><Button variant="secondary" className="h-7 px-2 text-[10px]" aria-label="Video transitions" onClick={() => setBrowser("transitions")}>Transitions</Button><Button variant="secondary" className="h-7 px-2 text-[10px]" aria-label="Video effects" onClick={() => setBrowser("visual")}>VFX</Button>{s.visualPreset !== "none" && <Button variant="ghost" className="h-7 px-2 text-[10px]" aria-label="Clear video effect" onClick={() => setS({ visualPreset: "none" })}>Off</Button>}</div>{browser && <EffectBrowser initialTab="Visual" transitions={browser === "transitions"} selected={browser === "transitions" ? s.transitionPreset : s.visualPreset} onVisual={visualPreset => setS({ visualPreset })} onTransition={transitionPreset => setS({ transitionPreset })} onClose={() => setBrowser(null)} />}</>;
+  const nextPreset = (kind: "visual" | "transitions") => {
+    const list = kind === "visual" ? VISUAL_PRESETS : TRANSITION_PRESETS;
+    const current = kind === "visual" ? s.visualPreset : s.transitionPreset;
+    const next = list[(list.findIndex(p => p.key === current) + 1) % list.length];
+    if (!next) return;
+    setS(kind === "visual" ? { visualPreset: next.key } : { transitionPreset: next.key });
+  };
+  const controls = <>
+    <div className="grid grid-cols-2 gap-1 py-1">
+      {(["transitions", "visual"] as const).map(kind => {
+        const visual = kind === "visual";
+        const label = visual ? "VFX" : "Transitions";
+        const enabled = visual ? s.videoFxEnabled : s.transitionEnabled;
+        const selected = (visual ? VISUAL_PRESETS : TRANSITION_PRESETS).find(p => p.key === (visual ? s.visualPreset : s.transitionPreset));
+        return <div key={kind} className="flex min-w-0 flex-col items-center gap-0.5">
+          <Button variant="secondary" className="h-6 w-full min-w-0 truncate px-1 text-[9px]" aria-label={visual ? "Video effects" : "Video transitions"} title={selected?.label ?? label} onClick={() => setBrowser(kind)}>{selected?.label ?? label}</Button>
+          <div className="flex items-center justify-center gap-0.5">
+            <Button variant="ghost" size="icon" className="size-6" aria-label={`${label} on/off`} aria-pressed={enabled} title={`${label} on/off`} onClick={() => setS(visual ? { videoFxEnabled: !enabled } : { transitionEnabled: !enabled })}><Power className={`size-3 ${enabled ? "text-primary" : "text-muted-foreground"}`} /></Button>
+            <div aria-label={`${label} amount`}><Knob size={28} showTicks={false} value={visual ? s.videoFxAmount : s.transitionAmount} onChange={value => setS(visual ? { videoFxAmount: value } : { transitionAmount: value })} /></div>
+            <Button variant="ghost" size="icon" className="size-6" aria-label={`Next ${label}`} title={`Next ${label}`} onClick={() => nextPreset(kind)}><SkipForward className="size-3" /></Button>
+          </div>
+        </div>;
+      })}
+    </div>
+    {browser && <EffectBrowser initialTab="Visual" transitions={browser === "transitions"} selected={browser === "transitions" ? s.transitionPreset : s.visualPreset} onVisual={visualPreset => setS({ visualPreset })} onTransition={transitionPreset => setS({ transitionPreset })} onClose={() => setBrowser(null)} />}
+  </>;
+  const stage = <div className="relative">
+    <MasterStage deckA={deckA} deckB={deckB} />
+    <Button variant="ghost" size="icon" className="absolute right-1 top-1 size-7 bg-background/60" aria-label={fullscreen ? "Exit fullscreen video" : "Fullscreen video"} title="Fullscreen video" onClick={() => setFullscreen(v => !v)}>{fullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}</Button>
+  </div>;
+  if (fullscreen) return <div className="fixed inset-0 z-[350] flex flex-col items-center justify-center bg-background p-2"><div className="w-full max-w-5xl">{stage}</div><div className="w-full max-w-xs">{controls}</div></div>;
+
 
   if (embedded || !s.floatingVideo) {
     return (
       <div className="mx-auto w-full" style={{ maxWidth: 320 * scale }}>
-        <MasterStage deckA={deckA} deckB={deckB} />
+        {stage}
         {controls}
       </div>
     );
@@ -306,7 +350,7 @@ export function VideoMixStage({ deckA, deckB, embedded = false }: { deckA: Deck;
           <Maximize2 className="w-3 h-3" />
         </button>
       </div>
-      <MasterStage deckA={deckA} deckB={deckB} />
+      {stage}
       {controls}
     </div>
   );
