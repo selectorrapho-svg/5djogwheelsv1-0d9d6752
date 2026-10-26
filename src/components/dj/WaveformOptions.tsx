@@ -35,13 +35,6 @@ export function WaveformOptions({ topVisible, onTopVisible }: { topVisible?: boo
           </select>
         </label>
         <div className="grid grid-cols-3 gap-1 px-1">{([1, 2, 3] as const).map((n) => <Button key={n} variant={settings.waveTracks === n ? "default" : "secondary"} aria-label={`${n} waveform lanes`} aria-pressed={settings.waveTracks === n} className="rounded-2xl" onClick={() => update({ waveTracks: n })}>{n === 1 ? <Minus /> : n === 2 ? <Rows2 /> : <Rows3 />}</Button>)}</div>
-        <div className="px-1">
-          <label className="block text-sm">Zoom · {Math.round(settings.waveZoom * 100)}%</label>
-          <div className="mt-1 flex items-center gap-2">
-            <input aria-label="Waveform zoom" type="range" min={0.25} max={4} step={0.25} value={settings.waveZoom} onChange={e => update({ waveZoom: Number(e.target.value) })} className="min-w-0 flex-1 accent-primary" />
-            <Button variant="secondary" className="h-7 rounded-full px-2 text-[11px] tabular-nums" aria-label="Reset waveform zoom to 100%" onClick={() => update({ waveZoom: 1 })}>100%</Button>
-          </div>
-        </div>
       </div>
     </PopoverContent>
   </Popover>;
