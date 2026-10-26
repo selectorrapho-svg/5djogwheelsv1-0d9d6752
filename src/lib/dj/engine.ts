@@ -450,6 +450,7 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
@@ -473,9 +474,38 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     this.emit();
+  }
+
+  /** Remember this track's hot cues / cue point on the device. */
+  private persistCues() {
+    if (!this.trackKey || typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem("djog.cues." + this.trackKey, JSON.stringify({ hotCues: this.hotCues, cuePoint: this.cuePoint }));
+    } catch {}
+  }
+
+  /** Restore hot cues / cue point saved from a previous session with this track. */
+  private restoreCues() {
+    if (!this.trackKey || typeof localStorage === "undefined") return;
+    try {
+      const raw = localStorage.getItem("djog.cues." + this.trackKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { hotCues?: (HotCue | null)[]; cuePoint?: number };
+      if (Array.isArray(saved.hotCues)) {
+        this.hotCues = Array.from({ length: 8 }, (_, i) => {
+          const c = saved.hotCues?.[i];
+          return c && typeof c.time === "number" ? { index: i, time: c.time } : null;
+        });
+      }
+      if (typeof saved.cuePoint === "number" && saved.cuePoint >= 0) {
+        this.cuePoint = saved.cuePoint;
+        this.cueSet = true;
+      }
+    } catch {}
   }
 
   /** Background analysis: accurate beat grid, then optional AI stems. */
