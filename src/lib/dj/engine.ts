@@ -432,6 +432,7 @@ export class Deck {
     this.buffer = null;
     this.wavePeaks = null;
     this.trackName = name;
+    this.trackKey = "url:" + url;
     this.coverUrl = coverUrl;
     this.videoSeeker.dispose();
     this.videoEl?.pause();
@@ -595,6 +596,7 @@ export class Deck {
     this.videoEl?.pause();
     const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
     this.trackName = file.name.replace(/\.[^.]+$/, "");
+    this.trackKey = "file:" + file.name + ":" + file.size;
     if (isVideo) {
       if (file.size > 120 * 1024 * 1024) { await this.loadVideoSrc(URL.createObjectURL(file), null); return; }
       const v = await openVideo(URL.createObjectURL(file));
