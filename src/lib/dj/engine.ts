@@ -235,6 +235,8 @@ export class Deck {
   private stemSplitter: ChannelSplitterNode | null = null;
   private stemMergers: ChannelMergerNode[] = [];
   trackName = "";
+  /** Stable identity of the loaded track — used to persist hot cues per track. */
+  private trackKey = "";
   videoEl: HTMLVideoElement | null = null;
   coverUrl: string | null = null;
   loopActive = false;
