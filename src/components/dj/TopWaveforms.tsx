@@ -20,7 +20,7 @@ export function TopWaveforms({ decks }: { decks: Deck[] }) {
           <button aria-label="Close full waveform" onClick={() => setFull(null)} className="grid size-8 place-items-center rounded-full dj-glass"><X className="size-4" /></button>
         </div>
         <div className="min-h-0 flex-1">
-          <HorizontalWaveform deck={full} index={full.id === 1 ? 1 : 2} color={full.id === 1 ? "var(--accent-orange)" : "var(--accent-blue)"} />
+          <HorizontalWaveform deck={full} index={full.id === "A" ? 1 : 2} color={full.id === "A" ? "var(--accent-orange)" : "var(--accent-blue)"} />
         </div>
       </div>
     )}
