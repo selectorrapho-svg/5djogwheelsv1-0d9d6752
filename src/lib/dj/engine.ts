@@ -768,6 +768,7 @@ export class Deck {
   setCue() {
     this.cuePoint = this.currentTime;
     this.cueSet = true;
+    this.persistCues();
     this.emit();
   }
 
@@ -791,6 +792,7 @@ export class Deck {
   setHotCue(i: number) {
     if (i < 0 || i >= this.hotCues.length || !Number.isInteger(i)) return;
     this.hotCues[i] = { index: i, time: this.quantize ? snapToBeat(this.currentTime, this.bpm, this.firstBeat, this.duration) : this.currentTime };
+    this.persistCues();
     this.emit();
   }
 
@@ -799,6 +801,7 @@ export class Deck {
 
   clearHotCue(i: number) {
     this.hotCues[i] = null;
+    this.persistCues();
     this.emit();
   }
 
