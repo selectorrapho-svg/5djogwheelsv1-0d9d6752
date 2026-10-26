@@ -235,6 +235,8 @@ export class Deck {
   private stemSplitter: ChannelSplitterNode | null = null;
   private stemMergers: ChannelMergerNode[] = [];
   trackName = "";
+  /** Stable identity of the loaded track — used to persist hot cues per track. */
+  private trackKey = "";
   videoEl: HTMLVideoElement | null = null;
   coverUrl: string | null = null;
   loopActive = false;
@@ -430,6 +432,7 @@ export class Deck {
     this.buffer = null;
     this.wavePeaks = null;
     this.trackName = name;
+    this.trackKey = "url:" + url;
     this.coverUrl = coverUrl;
     this.videoSeeker.dispose();
     this.videoEl?.pause();
@@ -447,6 +450,7 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
@@ -470,9 +474,38 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     this.emit();
+  }
+
+  /** Remember this track's hot cues / cue point on the device. */
+  private persistCues() {
+    if (!this.trackKey || typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem("djog.cues." + this.trackKey, JSON.stringify({ hotCues: this.hotCues, cuePoint: this.cuePoint }));
+    } catch {}
+  }
+
+  /** Restore hot cues / cue point saved from a previous session with this track. */
+  private restoreCues() {
+    if (!this.trackKey || typeof localStorage === "undefined") return;
+    try {
+      const raw = localStorage.getItem("djog.cues." + this.trackKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { hotCues?: (HotCue | null)[]; cuePoint?: number };
+      if (Array.isArray(saved.hotCues)) {
+        this.hotCues = Array.from({ length: 8 }, (_, i) => {
+          const c = saved.hotCues?.[i];
+          return c && typeof c.time === "number" ? { index: i, time: c.time } : null;
+        });
+      }
+      if (typeof saved.cuePoint === "number" && saved.cuePoint >= 0) {
+        this.cuePoint = saved.cuePoint;
+        this.cueSet = true;
+      }
+    } catch {}
   }
 
   /** Background analysis: accurate beat grid, then optional AI stems. */
@@ -593,6 +626,7 @@ export class Deck {
     this.videoEl?.pause();
     const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
     this.trackName = file.name.replace(/\.[^.]+$/, "");
+    this.trackKey = "file:" + file.name + ":" + file.size;
     if (isVideo) {
       if (file.size > 120 * 1024 * 1024) { await this.loadVideoSrc(URL.createObjectURL(file), null); return; }
       const v = await openVideo(URL.createObjectURL(file));
@@ -618,6 +652,7 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
@@ -733,6 +768,7 @@ export class Deck {
   setCue() {
     this.cuePoint = this.currentTime;
     this.cueSet = true;
+    this.persistCues();
     this.emit();
   }
 
@@ -756,6 +792,7 @@ export class Deck {
   setHotCue(i: number) {
     if (i < 0 || i >= this.hotCues.length || !Number.isInteger(i)) return;
     this.hotCues[i] = { index: i, time: this.quantize ? snapToBeat(this.currentTime, this.bpm, this.firstBeat, this.duration) : this.currentTime };
+    this.persistCues();
     this.emit();
   }
 
@@ -764,6 +801,7 @@ export class Deck {
 
   clearHotCue(i: number) {
     this.hotCues[i] = null;
+    this.persistCues();
     this.emit();
   }
 

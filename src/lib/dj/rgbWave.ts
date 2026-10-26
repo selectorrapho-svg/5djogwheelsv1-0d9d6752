@@ -50,8 +50,8 @@ function cachedColumns(peaks: BandedPeaks, stems: StemsOn) {
   return columns;
 }
 
-/** Zigzag spikes kick in once zoomed in past the default view. */
-export const zoomedZigzag = (zoom: number) => zoom > 1.05;
+/** Crisp spike rendering at every zoom level (djay-style thin line waveform). */
+export const zoomedZigzag = (_zoom: number) => true;
 
 /** Pre-render the full track. axis "y" = time runs down (vertical decks). */
 export function buildRgbStrip(peaks: BandedPeaks, stems: StemsOn, axis: "y" | "x"): RgbStrip | null {
