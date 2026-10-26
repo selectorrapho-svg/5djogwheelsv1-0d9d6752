@@ -652,6 +652,7 @@ export class Deck {
     this.pausedAt = 0;
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
+    this.restoreCues();
     this.bpm = 0;
     this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
