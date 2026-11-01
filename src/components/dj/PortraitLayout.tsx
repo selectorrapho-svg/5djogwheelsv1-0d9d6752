@@ -30,7 +30,7 @@ import { WaveformOptions } from "./WaveformOptions";
 
 function MiniDeckHeader({ deck, side, onLibrary }: { deck: Deck; side: "left" | "right"; onLibrary: () => void }) {
   useDeck(deck);
-  const accent = side === "left" ? "#ff8a3b" : "#3bd2ff";
+  const accent = side === "left" ? "var(--accent-orange)" : "var(--accent-blue)";
   const fmt = (s: number) => {
     if (!isFinite(s)) return "0:00";
     const m = Math.floor(Math.abs(s) / 60);
@@ -187,11 +187,11 @@ export function PortraitLayout({
         {[deckLeft, deckRight].map(d => <div key={d.id} className="flex items-center justify-center gap-3 h-9 text-sm font-semibold">{d.id}<PreCueButton deck={d} /><Button variant="ghost" className="h-7 w-8 p-0" aria-label={`Stems deck ${d.id}`} aria-expanded={stemsDeck === d} onClick={() => setStemsDeck(current => current === d ? null : d)}>S</Button></div>)}
       </div>
       <div className="grid grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-1 h-12 px-2 shrink-0 border-t border-border">
-        <SyncButton onClick={() => deckLeft.toggleSync(deckRight)} active={deckLeft.syncLocked} bpm={deckLeft.bpm * deckLeft.rate} accent="#ff8a3b" width={58} height={32} />
+        <SyncButton onClick={() => deckLeft.toggleSync(deckRight)} active={deckLeft.syncLocked} bpm={deckLeft.bpm * deckLeft.rate} accent="var(--control-blue)" width={58} height={32} />
         <span className="text-xs tabular-nums text-muted-foreground">{deckLeft.bpm ? deckLeft.bpm.toFixed(1) : "—"} <small>BPM</small></span>
         <Button variant="ghost" onClick={() => { setToolTab("fx"); setSheet("tools"); }} aria-label="Open tools" title="FX, samples, cues, loops and EQ" className="grid size-9 place-items-center rounded-full border border-border bg-secondary"><Sliders className="size-4" /></Button>
         <span className="text-right text-xs tabular-nums text-muted-foreground">{deckRight.bpm ? deckRight.bpm.toFixed(1) : "—"} <small>BPM</small></span>
-        <SyncButton onClick={() => deckRight.toggleSync(deckLeft)} active={deckRight.syncLocked} bpm={deckRight.bpm * deckRight.rate} accent="#3bd2ff" width={58} height={32} />
+        <SyncButton onClick={() => deckRight.toggleSync(deckLeft)} active={deckRight.syncLocked} bpm={deckRight.bpm * deckRight.rate} accent="var(--control-blue)" width={58} height={32} />
       </div>
       <div className="grid grid-cols-[1fr_1fr] gap-2 px-2 h-10 shrink-0 border-t border-border">
         {[deckLeft, deckRight].map((deck) => <div key={deck.id} className="cue-control-group grid grid-cols-2 py-1">

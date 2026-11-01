@@ -518,3 +518,9 @@
 
 .wave-surface { background: var(--wave-dark); }
 .reference-control { background: var(--glass); border: 1px solid var(--glass-border); }
+
+:root { --sync-shadow: 0 0 10px color-mix(in oklab, var(--control-blue) 45%, transparent); }
+.sync-active, .keylock-active { color: var(--control-blue); background: color-mix(in oklab, var(--control-blue) 20%, var(--background)); border: 1px solid var(--control-blue); }
+.vu-compact .vu-stereo { height: 100%; max-height: none; }
+.vu-compact .vu-meter { height: 100%; gap: 1px; }
+.vu-compact .vu-meter > span { flex: 1; min-height: 1px; height: auto; }

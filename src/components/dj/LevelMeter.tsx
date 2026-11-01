@@ -4,7 +4,7 @@ import { Deck } from "@/lib/dj/engine";
 const SEGMENTS = 28;
 
 /** Segmented VU meter: grey cells light from the bottom, white peak mark. */
-export function LevelMeter({ deck, label }: { deck: Deck; label: string }) {
+export function LevelMeter({ deck, label, compact = false }: { deck: Deck; label: string; compact?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const peak = useRef([0, 0]);
   useEffect(() => {
@@ -29,7 +29,7 @@ export function LevelMeter({ deck, label }: { deck: Deck; label: string }) {
     return () => cancelAnimationFrame(raf);
   }, [deck]);
   return (
-    <div className="flex h-full min-h-20 flex-col items-center gap-1" aria-label={`${label} level meter`}>
+    <div className={`flex h-full flex-col items-center gap-1 ${compact ? "vu-compact" : "min-h-20"}`} aria-label={`${label} level meter`}>
       <div ref={box} className="vu-stereo" aria-label={`${label} left and right channels`}>
         {[0, 1].map(channel => <div key={channel} className="vu-meter">
           {Array.from({ length: SEGMENTS }).map((_, i) => <span key={i} data-on="0" />)}

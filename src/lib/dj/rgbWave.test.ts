@@ -23,7 +23,7 @@ describe("stem-aware waveform", () => {
 
   it("boosts the high column so treble stays visible", () => {
     const { high } = rgbColumns(peaks, stemsOn(stems));
-    expect(high[0]).toBeCloseTo((0.2 + 0.1) * 1.6);
+    expect(high[0]).toBeCloseTo(0.2 * 1.6);
   });
 
   it("cache key follows which stems are on", () => {

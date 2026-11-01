@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 // Serato-style dark glass oval button. When synced it blinks blue and shows
 // just "SYNC" — no tempo readout.
 export function SyncButton({
@@ -6,7 +7,6 @@ export function SyncButton({
   label = "SYNC",
   width = 62,
   height = 26,
-  accent,
 }: {
   onClick: () => void;
   active?: boolean;
@@ -18,15 +18,15 @@ export function SyncButton({
   bpm?: number;
 }) {
   return (
-    <button
+    <Button variant="ghost" aria-pressed={!!active} aria-label={label}
       onClick={onClick}
-      className={`flex items-center justify-center leading-none rounded-full active:scale-[0.97] transition-transform ${
-        active ? "dj-glass-on sync-blinking" : "dj-glass"
+      className={`flex items-center justify-center leading-none p-0 rounded-full active:scale-[0.97] transition-transform ${
+        active ? "sync-active" : "dj-glass"
       }`}
       style={{
         width,
         height,
-        boxShadow: active && accent ? `0 0 12px ${accent}88, var(--glass-shadow)` : undefined,
+        boxShadow: active ? "var(--sync-shadow)" : undefined,
       }}
     >
       <span
@@ -39,6 +39,6 @@ export function SyncButton({
       >
         {label}
       </span>
-    </button>
+    </Button>
   );
 }
