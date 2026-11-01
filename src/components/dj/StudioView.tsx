@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Download, Save, FolderOpen, X, Plus, Play, Square, Repeat, Trash2, Magnet, Scissors, Copy, ClipboardPaste, SplitSquareHorizontal, ZoomIn, ZoomOut, CopyPlus, RotateCcw, SlidersHorizontal, Link2, Undo2, Redo2, SkipBack, SkipForward, Eraser, MousePointer2, Minus, Activity, Crosshair } from "lucide-react";
 import { computeBandedPeaks } from "@/lib/dj/engine";
-import { buildRgbStrip } from "@/lib/dj/rgbWave";
+import { buildRgbStrip, drawRgbStrip } from "@/lib/dj/rgbWave";
 import { Button } from "@/components/ui/button";
 import type { Mixer } from "@/lib/dj/engine";
 import { splitClip, trimClip, clipSource, clipDuration, studioGridStep, studioPitch, studioPlacement, syncClip, studioDuration, studioSchedule, type StudioClip } from "@/lib/dj/studio";
@@ -19,36 +19,13 @@ function ClipWave({ buffer, width }: { buffer: AudioBuffer; width: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current; if (!cv) return;
-    const w = Math.max(1, Math.round(width)), h = 44;
+    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+    const w = Math.max(1, Math.round(width * dpr)), h = Math.round(44 * dpr);
     cv.width = w; cv.height = h;
     const g = cv.getContext("2d"); if (!g) return;
     g.clearRect(0, 0, w, h);
-    // Same full-spectrum RGB renderer as the decks (low red, mid green, high blue).
-    const strip = buildRgbStrip(computeBandedPeaks(buffer, Math.min(8000, Math.max(64, w * 2))), ALL_STEMS, "x");
-    if (!strip) return;
-    // Zigzag contour: each 3px column alternates between its real peak and
-    // trough from the raw samples, so zooming in shows sharp jagged edges.
-    const data = buffer.getChannelData(0);
-    const step = 3, cols = Math.ceil(w / step), per = data.length / cols, mid = h / 2;
-    g.beginPath();
-    g.moveTo(0, mid);
-    const lows: number[] = [];
-    for (let i = 0; i < cols; i++) {
-      const a = Math.floor(i * per), b = Math.min(data.length, Math.floor((i + 1) * per));
-      let mx = 0, mn = 0;
-      for (let j = a; j < b; j += Math.max(1, Math.floor((b - a) / 256))) { const v = data[j]; if (v > mx) mx = v; else if (v < mn) mn = v; }
-      const x = i * step + step / 2;
-      const top = i % 2 ? mx * 0.55 : mx;
-      const bot = i % 2 ? mn : mn * 0.55;
-      g.lineTo(x, mid - Math.min(1, top) * mid);
-      lows.push(x, mid - Math.max(-1, bot) * mid);
-    }
-    g.lineTo(w, mid);
-    for (let k = lows.length - 2; k >= 0; k -= 2) g.lineTo(lows[k], lows[k + 1]);
-    g.closePath();
-    g.save(); g.clip();
-    g.imageSmoothingEnabled = true; g.drawImage(strip.canvas, 0, 0, w, h);
-    g.restore();
+    const strip = buildRgbStrip(computeBandedPeaks(buffer, Math.min(120000, Math.max(4800, Math.ceil(buffer.duration * 200)))), ALL_STEMS, "x");
+    if (strip && buffer.duration > 0) drawRgbStrip(g, strip, buffer.duration, buffer.duration / 2, w / buffer.duration, w, w / 2, 0, h);
   }, [buffer, width]);
   return <canvas ref={ref} className="pointer-events-none h-11 w-full" />;
 }
@@ -406,43 +383,20 @@ export function StudioView({ mixer, onClose }: { mixer: Mixer; onClose: () => vo
       <label className="flex items-center gap-1 text-[11px] text-muted-foreground">BPM
         <input type="number" min={60} max={200} step={0.1} value={bpm} aria-label="Project tempo" onChange={e => { const v = Number(e.target.value); if (v >= 30 && v <= 300) setBpm(v); }} className="w-16 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-sm text-foreground" />
       </label>
-      <div className="flex items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant={cutTool || eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Editing tools" title="Editing tools">
-              {cutTool ? <Scissors className="size-4 -rotate-90" /> : eraseTool ? <Eraser className="size-4" /> : <MousePointer2 className="size-4" />}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="z-[410] rounded-md">
-            <DropdownMenuItem aria-pressed={!cutTool && !eraseTool} onSelect={() => { setCutTool(false); setEraseTool(false); }}><MousePointer2 className="size-4" />Selection{!cutTool && !eraseTool ? " ✓" : ""}</DropdownMenuItem>
-            <DropdownMenuItem aria-pressed={cutTool} disabled={!clips.length} onSelect={() => { setCutTool(v => !v); setEraseTool(false); }}><Scissors className="size-4 -rotate-90" />Scissors — tap a clip to split{cutTool ? " ✓" : ""}</DropdownMenuItem>
-            <DropdownMenuItem aria-pressed={eraseTool} disabled={!clips.length} onSelect={() => { setEraseTool(v => !v); setCutTool(false); }}><Eraser className="size-4" />Eraser — tap a clip to delete{eraseTool ? " ✓" : ""}</DropdownMenuItem>
-            <DropdownMenuItem onSelect={tapTempo}><Activity className="size-4" />Tap tempo — map the beat</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="size-9" aria-label="Clip edit menu" title="Split, cut, copy, paste, duplicate"><Copy className="size-4" /></Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="z-[410] rounded-md">
-            <DropdownMenuItem disabled={!clips.length} onSelect={split}><SplitSquareHorizontal className="size-4" />Split at playhead</DropdownMenuItem>
-            <DropdownMenuItem disabled={!selected} onSelect={cutSel}><Scissors className="size-4" />Cut clip</DropdownMenuItem>
-            <DropdownMenuItem disabled={!selected} onSelect={copySel}><Copy className="size-4" />Copy clip</DropdownMenuItem>
-            <DropdownMenuItem disabled={!hasClip} onSelect={paste}><ClipboardPaste className="size-4" />Paste at playhead</DropdownMenuItem>
-            <DropdownMenuItem disabled={!selected} onSelect={duplicate}><CopyPlus className="size-4" />Duplicate clip</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div role="toolbar" aria-label="Studio editing tools" className="flex flex-wrap items-center gap-1">
+        <Button variant={!cutTool && !eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Selection tool" title="Selection" onClick={() => { setCutTool(false); setEraseTool(false); }}><MousePointer2 className="size-4" /></Button>
+        <Button variant={cutTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Scissors tool" title="Scissors" disabled={!clips.length} onClick={() => { setCutTool(v => !v); setEraseTool(false); }}><Scissors className="size-4" /></Button>
+        <Button variant={eraseTool ? "default" : "outline"} size="icon" className="size-9" aria-label="Eraser tool" title="Eraser" disabled={!clips.length} onClick={() => { setEraseTool(v => !v); setCutTool(false); }}><Eraser className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Tap tempo" title="Tap tempo" onClick={tapTempo}><Activity className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Split at playhead" title="Split" disabled={!clips.length} onClick={split}><SplitSquareHorizontal className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Cut clip" title="Cut" disabled={!selected} onClick={cutSel}><Scissors className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Copy clip" title="Copy" disabled={!selected} onClick={copySel}><Copy className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Paste at playhead" title="Paste" disabled={!hasClip} onClick={paste}><ClipboardPaste className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Duplicate clip" title="Duplicate" disabled={!selected} onClick={duplicate}><CopyPlus className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom in" title="Zoom in" onClick={() => setPx(p => Math.min(4096, p * 1.5))}><ZoomIn className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom out" title="Zoom out" onClick={() => setPx(p => Math.max(6, p / 1.5))}><ZoomOut className="size-4" /></Button>
+        <Button variant="outline" size="icon" className="size-9" aria-label="Zoom to playhead" title="Zoom to playhead" onClick={() => { const el = scrollRef.current; if (!el) return; const next = Math.min(4096, zoomRef.current * 2); zoomRef.current = next; setPx(next); requestAnimationFrame(() => { el.scrollLeft = Math.max(0, head / beatSec * next - el.clientWidth / 2); }); }}><Crosshair className="size-4" /></Button>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="size-9" aria-label="Zoom menu" title="Zoom"><ZoomIn className="size-4" /></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="z-[410] rounded-md">
-          <DropdownMenuItem onSelect={() => setPx(p => Math.min(4096, p * 1.5))}><ZoomIn className="size-4" />Zoom in</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setPx(p => Math.max(6, p / 1.5))}><ZoomOut className="size-4" />Zoom out</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => { const el = scrollRef.current; if (!el) return; const next = Math.min(4096, zoomRef.current * 2); zoomRef.current = next; setPx(next); requestAnimationFrame(() => { el.scrollLeft = Math.max(0, (head / beatSec) * next - el.clientWidth / 2); }); }}><Crosshair className="size-4" />Zoom to playhead</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
       <Button variant="outline" size="icon" className="size-9" aria-label="Add lane" onClick={() => setLaneCount(lanes + 1)}><Plus className="size-4" /></Button>
       <Button variant="outline" size="icon" className="size-9" aria-label="Track FX and pitch" disabled={!selected} onClick={() => setEditOpen(v => !v)}><SlidersHorizontal className="size-4" /></Button>
       <Button variant="outline" size="icon" className="size-9" aria-label="Sync selected clip to project beats" disabled={!selected} onClick={() => { if (selected) update(selected.id, syncClip(selected, bpm)); }}><Link2 className="size-4" /></Button>

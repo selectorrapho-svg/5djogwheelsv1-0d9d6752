@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Mixer } from "@/lib/dj/engine";
 import { sampleLibrary, type Sample } from "@/lib/dj/sampleLibrary";
 import { ChevronDown, Grid3x3, Plus, Trash2, X } from "lucide-react";
-import { Fader } from "./Fader";
+import { Knob } from "./Knob";
 import { Button } from "@/components/ui/button";
 
 export function SamplerPanel({
@@ -65,14 +65,14 @@ export function SamplerPanel({
           <input ref={fileRef} type="file" accept="audio/*" multiple className="hidden"
             onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; void sampleLibrary.add(f).then(() => { setPackId("mine"); setPage(0); }); }} />
         </div>
-        <div className="sampler-grid grid grid-cols-4 gap-1" aria-label="Video sample pads">
+        <div className="flex items-center gap-1"><div className="sampler-grid grid flex-1 grid-cols-4 gap-1" aria-label="Video sample pads">
           {pads.map((p, i) => (
             <Button variant="ghost" key={i} disabled={!p} onPointerDown={() => p && trigger(p, i)}
               data-active={hit === i} className={`performance-pad animated-pad pad-tone-${i % 4} h-8 min-w-0 truncate px-0.5 py-1 text-[8px] font-medium uppercase disabled:opacity-30`}>
               {p?.label ?? i + 1}
             </Button>
           ))}
-        </div>
+        </div><Knob value={vol} onChange={setVol} size={28} label="Vol" compact /></div>
       </div>
     );
   }
@@ -139,7 +139,6 @@ export function SamplerPanel({
               <div className="flex-1">
                 <div className="sampler-grid grid grid-cols-4 gap-1">
                   {pads.map((p, i) => {
-                    const col = p?.color ?? "#ffffff";
                     const active = hit === i;
                     return (
                       <Button variant="ghost" key={i} disabled={!p} onPointerDown={() => p && trigger(p, i)}
@@ -158,8 +157,7 @@ export function SamplerPanel({
                 )}
               </div>
               <div className="flex flex-col items-center gap-1">
-                <Fader vu value={vol} onChange={setVol} orientation="v" height={112} width={30} />
-                <span className="text-[8px] uppercase tracking-widest text-muted-foreground">Vol</span>
+                <Knob value={vol} onChange={setVol} size={38} label="Vol" />
               </div>
             </div>
           )}

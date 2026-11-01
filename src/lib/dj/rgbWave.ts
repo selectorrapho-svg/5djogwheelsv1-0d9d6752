@@ -19,6 +19,7 @@ export interface RgbStrip {
 
 const STRIP_AMP = 256;
 const TILE_BINS = 2048;
+const PALETTE = [[255, 65, 90], [65, 245, 130], [55, 190, 255]];
 
 export function rgbColumns(peaks: BandedPeaks, stems: StemsOn) {
   const n = peaks.overall.length;
@@ -54,14 +55,13 @@ export function buildRgbStrip(peaks: BandedPeaks, stems: StemsOn, axis: "y" | "x
       const dominant = Math.max(l, m, h);
       if (dominant <= 0) continue;
       const extent = Math.min(half - 1, dominant * (half - 1));
+      const bands = [l, m, h];
       // Nested envelopes expose high-frequency hits without inventing triangles.
       for (let k = -Math.ceil(extent); k <= Math.ceil(extent); k++) {
         const distance = Math.abs(k) / (half - 1);
-        const bands = [l, m, h];
         let band = l >= m && l >= h ? 0 : m >= h ? 1 : 2;
         for (let j = 0; j < 3; j++) if (distance <= bands[j] && bands[j] > 0) band = j;
-        const palette = [[255, 65, 90], [65, 245, 130], [55, 190, 255]];
-        const color = palette[band];
+        const color = PALETTE[band];
         const a = half + k;
         const p = axis === "y" ? (b * STRIP_AMP + a) * 4 : (a * count + b) * 4;
         img.data[p] = color[0]; img.data[p + 1] = color[1]; img.data[p + 2] = color[2];
