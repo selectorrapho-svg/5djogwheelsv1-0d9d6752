@@ -6,7 +6,7 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDjSettings } from "@/hooks/useDjSettings";
 import { useWaveScratch } from "@/lib/dj/useWaveScratch";
-import { buildRgbStrip, drawRgbStrip, drawZigzag, zoomedZigzag, stemsKey, stemsOn, type RgbStrip } from "@/lib/dj/rgbWave";
+import { buildRgbStrip, drawRgbStrip, stemsKey, stemsOn, type RgbStrip } from "@/lib/dj/rgbWave";
 
 function makeStrip(axis: "x" | "y") {
   const ref = { strip: null as RgbStrip | null, key: "", peaks: null as BandedPeaks | null };
@@ -47,11 +47,11 @@ export function Waveform({ deck, side }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const getStrip = makeStrip("y");
-    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
     const observer = new ResizeObserver(() => resize());
     const resize = () => {
-      const w = canvas.clientWidth * dpr;
-      const h = canvas.clientHeight * dpr;
+      const w = Math.round(canvas.clientWidth * dpr);
+      const h = Math.round(canvas.clientHeight * dpr);
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
@@ -83,8 +83,7 @@ export function Waveform({ deck, side }: Props) {
           for (let lane = 0; lane < settings.waveTracks; lane++) {
             const laneStems = settings.waveTracks === 1 ? stemsOn(deck.stems) : settings.waveTracks === 2 ? { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: lane === 1 && deck.stems.other.on } : { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: lane === 2 && deck.stems.other.on };
             const laneStrip = settings.waveTracks === 1 ? strip : getLaneStrip(lane, peaks, laneStems);
-            if (zoomedZigzag(effectiveZoom)) drawZigzag(ctx, peaks, laneStems, dur, t, pxPerSec, H, centerY, lane * W / settings.waveTracks, W / settings.waveTracks, "y");
-            else if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, H, centerY, lane * W / settings.waveTracks, W / settings.waveTracks);
+            if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, H, centerY, lane * W / settings.waveTracks, W / settings.waveTracks);
           }
         }
         else for (const [key, col, scale] of stemBands()) {
@@ -110,7 +109,7 @@ export function Waveform({ deck, side }: Props) {
         ctx.globalCompositeOperation = "source-over";
 
         // dim the already-played half (above the playhead)
-        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillStyle = "rgba(0,0,0,0.18)";
         ctx.fillRect(0, 0, W, centerY);
       }
 
@@ -232,10 +231,10 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
     const draw = () => {
-      const w = canvas.clientWidth * dpr;
-      const h = canvas.clientHeight * dpr;
+      const w = Math.round(canvas.clientWidth * dpr);
+      const h = Math.round(canvas.clientHeight * dpr);
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
@@ -249,7 +248,7 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
         return;
       }
       const strip = getOverviewStrip(peaks, deck);
-      if (strip) ctx.drawImage(strip.canvas, 0, 0, strip.canvas.width, strip.canvas.height, 0, 0, w, h);
+      if (strip && deck.duration > 0) drawRgbStrip(ctx, strip, deck.duration, deck.duration / 2, w / deck.duration, w, w / 2, 0, h);
       const p = deck.duration ? deck.currentTime / deck.duration : 0;
       ctx.fillStyle = accent;
       ctx.fillRect(p * w - 1, 0, 2, h);

@@ -5,7 +5,7 @@ import { stemBands, smoothAt, BAND_STEM } from "@/lib/dj/wavedraw";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDjSettings } from "@/hooks/useDjSettings";
-import { buildRgbStrip, drawRgbStrip, drawZigzag, zoomedZigzag, stemsKey, stemsOn, type RgbStrip } from "@/lib/dj/rgbWave";
+import { buildRgbStrip, drawRgbStrip, stemsKey, stemsOn, type RgbStrip } from "@/lib/dj/rgbWave";
 
 function makeStrip(axis: "x" | "y") {
   const ref = { strip: null as RgbStrip | null, key: "", peaks: null as BandedPeaks | null };
@@ -46,10 +46,10 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const getStrip = makeStrip("x");
-    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
     const resize = () => {
-      const w = canvas.clientWidth * dpr;
-      const h = canvas.clientHeight * dpr;
+      const w = Math.round(canvas.clientWidth * dpr);
+      const h = Math.round(canvas.clientHeight * dpr);
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
@@ -85,8 +85,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
         for (let lane = 0; lane < settings.waveTracks; lane++) {
           const on = settings.waveTracks === 1 ? stemsOn(deck.stems) : { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: (settings.waveTracks === 2 ? lane === 1 : lane === 2) && deck.stems.other.on };
           const laneStrip = settings.waveTracks === 1 ? strip : getLaneStrip(lane, peaks, on);
-          if (zoomedZigzag(effectiveZoom)) drawZigzag(ctx, peaks, on, dur, t, pxPerSec, W, W / 2, lane * H / settings.waveTracks, H / settings.waveTracks, "x");
-          else if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, W, W / 2, lane * H / settings.waveTracks, H / settings.waveTracks);
+          if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, W, W / 2, lane * H / settings.waveTracks, H / settings.waveTracks);
         }
       }
       else for (const [key, col, scale] of stemBands()) {
@@ -114,7 +113,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
       ctx.globalCompositeOperation = "source-over";
 
       // dim the already-played half
-      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
       ctx.fillRect(0, 0, W / 2, H);
 
       // beat grid
