@@ -1,5 +1,11 @@
 # Task roadmap
 
+## Active continuation — waveform clarity and remaining controls
+- [ ] Replace artificial zigzags with detailed, bright audio envelopes at all zoom levels
+- [ ] Add keylock below pitch, stereo VU beside volume, sample volume knob and blue portrait SYNC
+- [ ] Restore visible Studio editing tools
+- [ ] Verify loaded audio and controls in desktop and portrait
+
 ## Current request — video performance
 - [ ] Make Studio menus visible and extend track/event effects
 - [ ] Fix video seeking during scratch, loops and hot cues
