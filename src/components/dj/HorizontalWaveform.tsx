@@ -1,7 +1,6 @@
 import { WaveAnalysisStatus } from "./WaveAnalysisStatus";
 import { useEffect, useRef, useState } from "react";
 import { Deck, BandedPeaks } from "@/lib/dj/engine";
-import { stemBands, smoothAt, BAND_STEM } from "@/lib/dj/wavedraw";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDjSettings } from "@/hooks/useDjSettings";
@@ -19,7 +18,6 @@ function makeStrip(axis: "x" | "y") {
     return ref.strip;
   };
 }
-const isRgb3 = () => ((globalThis as { __djWaveColor?: string }).__djWaveColor ?? "rgb3") === "rgb3";
 import { useWaveScratch } from "@/lib/dj/useWaveScratch";
 
 
@@ -46,7 +44,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const getStrip = makeStrip("x");
-    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+    const dpr = Math.min(4, Math.max(2, window.devicePixelRatio || 1));
     const resize = () => {
       const w = Math.round(canvas.clientWidth * dpr);
       const h = Math.round(canvas.clientHeight * dpr);
@@ -75,39 +73,15 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
         return;
       }
 
-      const samples = peaks.overall.length;
-      const secsPerBin = dur / samples;
-      const step = Math.max(1, Math.floor(dpr));
 
       ctx.globalCompositeOperation = "source-over";
-      const strip = isRgb3() ? getStrip(peaks, deck) : null;
+      const strip = getStrip(peaks, deck);
       if (strip) {
         for (let lane = 0; lane < settings.waveTracks; lane++) {
           const on = settings.waveTracks === 1 ? stemsOn(deck.stems) : { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: (settings.waveTracks === 2 ? lane === 1 : lane === 2) && deck.stems.other.on };
           const laneStrip = settings.waveTracks === 1 ? strip : getLaneStrip(lane, peaks, on);
           if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, W, W / 2, lane * H / settings.waveTracks, H / settings.waveTracks);
         }
-      }
-      else for (const [key, col, scale] of stemBands()) {
-        if (!deck.stems[BAND_STEM[key as string]].on) continue;
-        const arr = peaks[key] as Float32Array;
-        // smooth filled envelope (mirrored) — silky at any zoom
-        ctx.beginPath();
-        ctx.moveTo(0, cy);
-        for (let x = 0; x <= W; x += step) {
-          const timeAt = t + (x - W / 2) / pxPerSec;
-          const v = smoothAt(arr, timeAt / secsPerBin, effectiveZoom > 1) * cy * scale;
-          ctx.lineTo(x, cy - v);
-        }
-        for (let x = W; x >= 0; x -= step) {
-          const timeAt = t + (x - W / 2) / pxPerSec;
-          const v = smoothAt(arr, timeAt / secsPerBin, effectiveZoom > 1) * cy * scale;
-          ctx.lineTo(x, cy + v);
-        }
-        ctx.closePath();
-        ctx.fillStyle = col;
-        ctx.globalAlpha = 0.85;
-        ctx.fill();
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
@@ -162,7 +136,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
 
     const lanes = new Map<number, { key: string; strip: RgbStrip | null }>();
     const getLaneStrip = (lane: number, peaks: BandedPeaks, on: ReturnType<typeof stemsOn>) => {
-      const key = JSON.stringify(on); let cached = lanes.get(lane);
+      const key = JSON.stringify(on) + ":" + peaks.overall.length; let cached = lanes.get(lane);
       if (!cached || cached.key !== key) { cached = { key, strip: buildRgbStrip(peaks, on, "x") }; lanes.set(lane, cached); }
       return cached.strip;
     };
@@ -170,7 +144,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
     let lastDraw = 0;
     const loop = (now: number) => {
       // idle decks redraw ~10fps to keep phones cool and responsive
-      if (now - lastDraw >= (deck.playing || deck.scratchingVideo ? 1000 / 45 : 200)) { draw(); lastDraw = now; }
+      if (now - lastDraw >= (deck.playing || deck.isScratching ? 1000 / 60 : 100)) { draw(); lastDraw = now; }
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);

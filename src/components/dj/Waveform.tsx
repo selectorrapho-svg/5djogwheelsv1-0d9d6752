@@ -1,7 +1,6 @@
 import { WaveAnalysisStatus } from "./WaveAnalysisStatus";
 import { useEffect, useRef, useState } from "react";
 import { Deck, BandedPeaks } from "@/lib/dj/engine";
-import { stemBands, smoothAt, BAND_STEM } from "@/lib/dj/wavedraw";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDjSettings } from "@/hooks/useDjSettings";
@@ -20,7 +19,6 @@ function makeStrip(axis: "x" | "y") {
     return ref.strip;
   };
 }
-const isRgb3 = () => ((globalThis as { __djWaveColor?: string }).__djWaveColor ?? "rgb3") === "rgb3";
 
 
 interface Props {
@@ -47,7 +45,7 @@ export function Waveform({ deck, side }: Props) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const getStrip = makeStrip("y");
-    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+    const dpr = Math.min(4, Math.max(2, window.devicePixelRatio || 1));
     const observer = new ResizeObserver(() => resize());
     const resize = () => {
       const w = Math.round(canvas.clientWidth * dpr);
@@ -69,41 +67,17 @@ export function Waveform({ deck, side }: Props) {
       const dur = deck.duration;
       const t = deck.currentTime;
 
-      const cx = W / 2;
-      const halfW = W * 0.48;
-      const step = Math.max(1, Math.floor(dpr));
 
       if (peaks && dur > 0) {
-        const samples = peaks.overall.length;
-        const secsPerBin = dur / samples;
 
         ctx.globalCompositeOperation = "source-over";
-        const strip = isRgb3() ? getStrip(peaks, deck) : null;
+        const strip = getStrip(peaks, deck);
         if (strip) {
           for (let lane = 0; lane < settings.waveTracks; lane++) {
             const laneStems = settings.waveTracks === 1 ? stemsOn(deck.stems) : settings.waveTracks === 2 ? { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: lane === 1 && deck.stems.other.on } : { bass: lane === 0 && deck.stems.bass.on, drums: lane === 0 && deck.stems.drums.on, vocals: lane === 1 && deck.stems.vocals.on, other: lane === 2 && deck.stems.other.on };
             const laneStrip = settings.waveTracks === 1 ? strip : getLaneStrip(lane, peaks, laneStems);
             if (laneStrip) drawRgbStrip(ctx, laneStrip, dur, t, pxPerSec, H, centerY, lane * W / settings.waveTracks, W / settings.waveTracks);
           }
-        }
-        else for (const [key, col, scale] of stemBands()) {
-          if (!deck.stems[BAND_STEM[key as string]].on) continue;
-          const arr = peaks[key] as Float32Array;
-          ctx.beginPath();
-          for (let y = 0; y <= H; y += step) {
-            const timeAt = t + (y - centerY) / pxPerSec;
-            const v = smoothAt(arr, timeAt / secsPerBin, effectiveZoom > 1) * halfW * scale;
-            ctx.lineTo(cx - v, y);
-          }
-          for (let y = H; y >= 0; y -= step) {
-            const timeAt = t + (y - centerY) / pxPerSec;
-            const v = smoothAt(arr, timeAt / secsPerBin, effectiveZoom > 1) * halfW * scale;
-            ctx.lineTo(cx + v, y);
-          }
-          ctx.closePath();
-          ctx.fillStyle = col;
-          ctx.globalAlpha = 0.85;
-          ctx.fill();
         }
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = "source-over";
@@ -169,7 +143,7 @@ export function Waveform({ deck, side }: Props) {
 
     const lanes = new Map<number, { key: string; strip: RgbStrip | null }>();
     const getLaneStrip = (lane: number, peaks: BandedPeaks, on: ReturnType<typeof stemsOn>) => {
-      const key = JSON.stringify(on);
+      const key = JSON.stringify(on) + ":" + peaks.overall.length;
       let cached = lanes.get(lane);
       if (!cached || cached.key !== key) { cached = { key, strip: buildRgbStrip(peaks, on, "y") }; lanes.set(lane, cached); }
       return cached.strip;
@@ -178,7 +152,7 @@ export function Waveform({ deck, side }: Props) {
     let lastDraw = 0;
     const loop = (now: number) => {
       // idle decks redraw ~10fps to keep phones cool and responsive
-      if (now - lastDraw >= (deck.playing || deck.scratchingVideo ? 1000 / 45 : 200)) { draw(); lastDraw = now; }
+      if (now - lastDraw >= (deck.playing || deck.isScratching ? 1000 / 60 : 100)) { draw(); lastDraw = now; }
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
@@ -231,7 +205,7 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+    const dpr = Math.min(4, Math.max(2, window.devicePixelRatio || 1));
     const draw = () => {
       const w = Math.round(canvas.clientWidth * dpr);
       const h = Math.round(canvas.clientHeight * dpr);

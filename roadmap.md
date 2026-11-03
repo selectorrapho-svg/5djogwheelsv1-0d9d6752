@@ -1,5 +1,10 @@
 # Task roadmap
 
+## Current request — RGB detail and scratching
+- [x] Remove legacy waveform styles and retain full RGB colors
+- [x] Replace blurred strip scaling with zoom-aware sharp spectral envelopes
+- [x] Improve waveform scratch paths and release timing; loaded audio preview and focused tests checked
+
 ## Active continuation — waveform clarity and remaining controls
 - [ ] Replace artificial zigzags with detailed, bright audio envelopes at all zoom levels
 - [ ] Add keylock below pitch, stereo VU beside volume, sample volume knob and blue portrait SYNC

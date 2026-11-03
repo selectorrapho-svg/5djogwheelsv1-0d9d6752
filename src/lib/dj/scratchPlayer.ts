@@ -104,6 +104,7 @@ class ScratchProcessor extends AudioWorkletProcessor {
         this.ptT = when;
         const want = Math.max(0.012, Math.min(0.045, Math.max(this.iv + 0.008, this.late + 0.005)));
         this.delay = want > this.delay ? want : this.delay + (want - this.delay) * 0.02;
+        this.port.postMessage({ type: 'delay', delay: this.delay, session: this.session });
         if (this.mode !== 'path' || this.path.length === 0) {
           this.path = [{ t: Math.min(when, currentTime) - this.delay, p: this.pos }];
           this.s1 = this.pos; this.s2 = this.pos;
@@ -341,6 +342,8 @@ export class ScratchPlayer {
   private reportedTime = 0;
   /** Last speed reported by the worklet (sec/sec), used for release hand-off. */
   liveRate = 0;
+  /** Current adaptive hand-path latency, including a small release guard. */
+  pathReleaseMs = 28;
   /** Called ~every 512 frames with the live playhead position (seconds). */
   onPos: (t: number, final: boolean) => void = () => {};
 
@@ -365,8 +368,9 @@ export class ScratchPlayer {
         outputChannelCount: [channels],
       });
       node.port.onmessage = (e: MessageEvent) => {
-        const d = e.data as { type?: string; pos?: number; rate?: number; session?: number; when?: number };
+        const d = e.data as { type?: string; pos?: number; rate?: number; session?: number; when?: number; delay?: number };
         if (d.session !== this.generation) return;
+        if (d.type === "delay" && typeof d.delay === "number") this.pathReleaseMs = Math.ceil(d.delay * 1000) + 4;
         if (typeof d?.rate === "number") this.liveRate = d.rate;
         if (d?.type === "pos" && typeof d.pos === "number") {
           this.reportedPosition = d.pos;

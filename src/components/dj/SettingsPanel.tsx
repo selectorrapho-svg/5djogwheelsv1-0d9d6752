@@ -5,7 +5,6 @@ import { blobToWav, FREE_VIDEO_LIMIT_MS, type RecordingKind, type VideoQuality }
 import { saveRecording } from '@/lib/dj/studioStorage';
 import { getMixer } from "@/lib/dj/useMixer";
 import { AppMode } from "@/hooks/useAppMode";
-import { WAVE_COLORS } from "@/lib/dj/wavedraw";
 import { useDjSettings, JOG_STYLES, VIDEO_FX, VIDEO_TRANSITIONS } from "@/hooks/useDjSettings";
 import { useTheme, THEMES } from "@/hooks/useTheme";
 import { connectMidi, subscribeMidi, MidiInfo } from "@/lib/dj/midi";
@@ -321,18 +320,6 @@ export function SettingsPanel({
                     <option value="horizontal">Horizontal</option>
                   </select>
                 </label>
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Colour
-                  <select value={s.waveColor} onChange={(e) => setS({ waveColor: e.target.value })} className="mt-1 w-full rounded-sm border border-border bg-secondary px-2 py-2 text-xs text-foreground">
-                    {WAVE_COLORS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {WAVE_COLORS.map((c) => (
-                  <button key={c.key} type="button" aria-label={c.label} onClick={() => setS({ waveColor: c.key })}
-                    className={`h-6 w-6 rounded-full border-2 ${s.waveColor === c.key ? "border-foreground" : "border-transparent"}`}
-                    style={{ background: c.rgb ? `rgb(${c.rgb.join(",")})` : "conic-gradient(red, orange, yellow, lime, cyan, blue, magenta, red)" }} />
-                ))}
               </div>
             </Section>
             </>}

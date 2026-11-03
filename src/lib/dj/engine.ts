@@ -1227,6 +1227,8 @@ export class Deck {
   /** True when the browser worklet can replay time-stamped hand paths. */
   get pathScratch() { return !isNative() && !!this.scratchPlayer?.available; }
 
+  get scratchReleaseMs() { return this.pathScratch ? this.scratchPlayer?.pathReleaseMs ?? 28 : 0; }
+
   /** Hand-trajectory scratch: platter position at a pointer event timestamp. */
   scratchPath(pos: number, eventTime: number) {
     if (!this.buffer) return;
