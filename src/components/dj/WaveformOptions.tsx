@@ -27,13 +27,6 @@ export function WaveformOptions({ topVisible, onTopVisible }: { topVisible?: boo
       </div>
       <div className="space-y-2 border-t border-[var(--glass-border)] py-2">
         {onTopVisible && <label className="flex items-center justify-between px-1 text-sm">Top waveforms<Switch aria-label="Show top waveforms" checked={topVisible} onCheckedChange={onTopVisible} /></label>}
-        <label className="block px-1 text-sm">Spectrum
-          <select aria-label="Waveform spectrum" className="mt-1.5 w-full rounded-2xl border border-[var(--glass-border)] bg-secondary p-2" value={settings.waveColor} onChange={e => update({ waveColor: e.target.value })}>
-            <option value="rgb3">Full RGB spectrum</option>
-            <option value="all">Original multicolor</option>
-            <option value="blue">Blue</option>
-          </select>
-        </label>
         <div className="grid grid-cols-3 gap-1 px-1">{([1, 2, 3] as const).map((n) => <Button key={n} variant={settings.waveTracks === n ? "default" : "secondary"} aria-label={`${n} waveform lanes`} aria-pressed={settings.waveTracks === n} className="rounded-2xl" onClick={() => update({ waveTracks: n })}>{n === 1 ? <Minus /> : n === 2 ? <Rows2 /> : <Rows3 />}</Button>)}</div>
       </div>
     </PopoverContent>
