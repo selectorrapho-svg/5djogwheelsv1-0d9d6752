@@ -22,6 +22,7 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
   const rate = useRef(0);
   const trackPos = useRef(0);
   const raf = useRef(0);
+  const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopLoop = () => {
     cancelAnimationFrame(raf.current);
@@ -33,9 +34,13 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
     active.current = false;
     pointerId.current = -1;
     rate.current = 0;
-    deck.endScratch();
     const start = slipStart.current;
-    if (settings.waveSlip && start?.playing) deck.seek(Math.min(deck.duration, start.position + (performance.now() - start.time) / 1000 * deck.rate));
+    const end = () => {
+      deck.endScratch();
+      if (settings.waveSlip && start?.playing) deck.seek(Math.min(deck.duration, start.position + (performance.now() - start.time) / 1000 * deck.rate));
+      releaseTimer.current = null;
+    };
+    releaseTimer.current = setTimeout(end, deck.scratchReleaseMs);
     slipStart.current = null;
   };
 
@@ -55,17 +60,19 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
     rate.current = Math.max(-12, Math.min(12, target));
     if (Math.abs(rate.current) < 0.015) rate.current = 0;
     trackPos.current = Math.max(0, Math.min(deck.duration, trackPos.current - dpx / pps));
-    deck.scratchTo(trackPos.current, rate.current);
+    if (!deck.pathScratch) deck.scratchTo(trackPos.current, rate.current);
   };
 
   useEffect(() => () => {
     stopLoop();
+    if (releaseTimer.current !== null) { clearTimeout(releaseTimer.current); deck.endScratch(); }
     if (active.current) { active.current = false; deck.endScratch(); }
   }, [deck]);
 
   return {
     onPointerDown: (e: React.PointerEvent) => {
-      if (!deck.buffer) return;
+      if (!deck.buffer || active.current) return;
+      if (releaseTimer.current !== null) { clearTimeout(releaseTimer.current); releaseTimer.current = null; }
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       const p = axis === "x" ? e.clientX : e.clientY;
       pointerId.current = e.pointerId;
@@ -77,20 +84,34 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
       slipStart.current = { position: deck.currentTime, time: performance.now(), playing: deck.playing };
       trackPos.current = deck.currentTime;
       deck.scratchStart();
+      if (deck.pathScratch) deck.scratchPath(trackPos.current, e.timeStamp);
       stopLoop();
       raf.current = requestAnimationFrame(tick);
     },
     onPointerMove: (e: React.PointerEvent) => {
       if (!active.current || e.pointerId !== pointerId.current) return;
       const evts = (e.nativeEvent as PointerEvent).getCoalescedEvents?.() ?? [];
-      const last = evts.length ? evts[evts.length - 1] : (e.nativeEvent as PointerEvent);
-      pos.current = axis === "x" ? last.clientX : last.clientY;
+      for (const sample of evts.length ? evts : [e.nativeEvent as PointerEvent]) {
+        const next = axis === "x" ? sample.clientX : sample.clientY;
+        if (deck.pathScratch) {
+          trackPos.current = Math.max(0, Math.min(deck.duration, trackPos.current - (next - pos.current) / Math.max(1, pxPerSec())));
+          deck.scratchPath(trackPos.current, sample.timeStamp);
+          lastPos.current = next;
+        }
+        pos.current = next;
+      }
     },
     onPointerUp: (e: React.PointerEvent) => {
       if (!active.current || e.pointerId !== pointerId.current) return;
       // Flush the movement since the last animation frame so a fast final
       // flick is not dropped when the finger lifts.
-      pos.current = axis === "x" ? e.clientX : e.clientY;
+      const next = axis === "x" ? e.clientX : e.clientY;
+      if (deck.pathScratch) {
+        trackPos.current = Math.max(0, Math.min(deck.duration, trackPos.current - (next - pos.current) / Math.max(1, pxPerSec())));
+        deck.scratchPath(trackPos.current, e.timeStamp);
+        lastPos.current = next;
+      }
+      pos.current = next;
       if (raf.current) { cancelAnimationFrame(raf.current); raf.current = 0; tick(); }
       // Serato-style: letting go snaps straight back to the platter speed.
       finish();

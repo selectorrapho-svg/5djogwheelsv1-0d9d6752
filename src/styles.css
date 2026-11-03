@@ -482,6 +482,9 @@
 
 /* ---- Waveform surfaces ---- */
 :root {
+  --wave-low-rgb: 255 48 80;
+  --wave-mid-rgb: 48 255 112;
+  --wave-high-rgb: 48 168 255;
   --wave-dark: radial-gradient(120% 90% at 50% 50%, #0d0f14 0%, #050608 70%, #000 100%);
   --wave-light: linear-gradient(180deg, #f4f5f7, #e6e8ec);
 }

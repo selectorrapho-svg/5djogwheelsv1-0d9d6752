@@ -221,7 +221,7 @@ export function JogWheel({ deck, size, accent }: Props) {
       // window (~30 ms) is enough and there is no stop-start hole on release.
       const fling = releaseVelocity(hist, performance.now(), sens());
       const tok = ++relTok;
-      window.setTimeout(() => { if (tok === relTok && pointerId === -1) deck.releaseScratch(fling); }, deck.pathScratch ? 30 : 0);
+      window.setTimeout(() => { if (tok === relTok && pointerId === -1) deck.releaseScratch(fling); }, deck.scratchReleaseMs);
     };
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);

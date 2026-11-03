@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { rgbColumns, stemsKey, stemsOn } from "./rgbWave";
+import { envelopeAt, envelopePeak, rgbColumns, stemsKey, stemsOn } from "./rgbWave";
 
 // Band → stem map (wavedraw.BAND_STEM): sub/bass→bass, lowMid→drums,
 // mid→vocals, presence/high→other.
 describe("stem-aware waveform", () => {
+  it("interpolates sustained audio without adding alternating peaks or overshoot", () => {
+    const values = new Float32Array([0.2, 0.8, 0.8, 0.3]);
+    expect(envelopeAt(values, 1.5)).toBeCloseTo(0.8);
+    for (let p = 0; p < 3; p += 0.05) {
+      const lo = Math.min(values[Math.floor(p)], values[Math.ceil(p)]);
+      const hi = Math.max(values[Math.floor(p)], values[Math.ceil(p)]);
+      expect(envelopeAt(values, p)).toBeGreaterThanOrEqual(lo);
+      expect(envelopeAt(values, p)).toBeLessThanOrEqual(hi);
+    }
+  });
+  it("retains a short hi-hat transient when zoomed out", () => {
+    expect(envelopePeak(new Float32Array([0, 0, 0.9, 0, 0]), 0, 5)).toBeCloseTo(0.9);
+  });
   const peaks = { overall: new Float32Array([1]), sub: new Float32Array([0.1]), bass: new Float32Array([0.2]), lowMid: new Float32Array([0.3]), mid: new Float32Array([0.8]), presence: new Float32Array([0.2]), high: new Float32Array([0.1]) };
   const stems = { bass: { on: true }, drums: { on: true }, vocals: { on: true }, other: { on: true } };
 

@@ -11,6 +11,6 @@ self.onmessage = (event: MessageEvent<{ id: number; channels: Float32Array[]; sa
     duration: first.length / sampleRate,
     getChannelData: (channel: number) => channels[channel],
   } as AudioBuffer;
-  const peaks = computeBandedPeaks(buffer, Math.max(4800, Math.min(120000, Math.ceil(buffer.duration * 200))), progress => self.postMessage({ id, progress }));
+  const peaks = computeBandedPeaks(buffer, Math.min(buffer.length, Math.max(4800, Math.ceil(buffer.duration * 800))), progress => self.postMessage({ id, progress }));
   self.postMessage({ id, peaks }, { transfer: Object.values(peaks).map(array => array.buffer) });
 };
