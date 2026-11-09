@@ -1,14 +1,12 @@
-// Real AI stem separation using demucs-rs (Apache-2.0, HTDemucs v4) compiled
-// to WebAssembly + WebGPU. Runs in a background worker; the deck keeps its
-// frequency-band stems until the separated stems are ready. Pro feature only.
+// Real AI stem separation using HTDemucs v4. Model and engine are cached on
+// this device so separation can continue offline after initial preparation.
 import wasmAsset from "@/assets/wasm/demucs_wasm_bg.wasm.asset.json";
 import modelAsset from "@/assets/models/htdemucs.safetensors.asset.json";
-import { isPro } from "@/lib/dj/license";
+import { canRunStemSeparation, hasOfflineStemAssets } from "./stemAvailability";
 import type { StemKey } from "./engine";
 
 const MODEL_ID = "htdemucs";
-// Bundled with the app; Hugging Face is only a fallback.
-const FALLBACK_MODEL_URL = "https://huggingface.co/set-soft/audio_separation/resolve/main/Demucs/htdemucs.safetensors";
+const WASM_ID = "demucs-wasm";
 const DB = "demucs-models";
 const STORE = "weights";
 
@@ -20,9 +18,14 @@ let seq = 0;
 const pending = new Map<number, { res: (v: any) => void; rej: (e: Error) => void }>();
 let queue: Promise<unknown> = Promise.resolve();
 let modelBytes: Promise<Uint8Array> | null = null;
+let wasmBytes: Promise<Uint8Array> | null = null;
 
 export function stemsSupported() {
-  return typeof window !== "undefined" && typeof Worker !== "undefined" && "gpu" in navigator;
+  return typeof window !== "undefined" && canRunStemSeparation({
+    hasWorker: typeof Worker !== "undefined",
+    hasWebGpu: "gpu" in navigator,
+    channels: 2,
+  });
 }
 
 function send(type: string, data: Record<string, unknown>, transfer: Transferable[] = []) {
@@ -34,7 +37,7 @@ function send(type: string, data: Record<string, unknown>, transfer: Transferabl
   });
 }
 
-function ensureWorker() {
+function ensureWorker(wasm: Uint8Array) {
   if (ready) return ready;
   worker = new Worker("/wasm/demucs/worker.js");
   worker.onmessage = (e) => {
@@ -46,8 +49,8 @@ function ensureWorker() {
     if (type === "error") p.rej(new Error(error));
     else p.res(e.data);
   };
-  const wasmUrl = new URL(wasmAsset.url, location.href).href;
-  ready = send("init", { wasmUrl }).then(() => undefined);
+  const wasmCopy = wasm.slice();
+  ready = send("init", { wasmBytes: wasmCopy }, [wasmCopy.buffer]).then(() => undefined);
   ready.catch(() => { ready = null; });
   return ready;
 }
@@ -55,35 +58,81 @@ function ensureWorker() {
 function idb(): Promise<IDBDatabase> {
   return new Promise((res, rej) => {
     const r = indexedDB.open(DB, 1);
-    r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+    r.onupgradeneeded = () => {
+      if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE);
+    };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
 }
 
-async function loadModel(): Promise<Uint8Array> {
+async function readCachedAsset(key: string): Promise<ArrayBuffer | undefined> {
   const db = await idb();
   const cached = await new Promise<ArrayBuffer | undefined>((res) => {
     const q = db.transaction(STORE).objectStore(STORE).get(MODEL_ID);
     q.onsuccess = () => res(q.result);
     q.onerror = () => res(undefined);
   });
+  db.close();
+  return cached;
+}
+
+async function writeCachedAsset(key: string, bytes: ArrayBuffer): Promise<void> {
+  const db = await idb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(bytes, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error("Could not save the stem model"));
+    tx.onabort = () => reject(tx.error ?? new Error("Could not save the stem model"));
+  });
+  db.close();
+}
+
+async function loadAsset(key: string, url: string): Promise<Uint8Array> {
+  const cached = await readCachedAsset(key);
   if (cached) return new Uint8Array(cached);
-  let r = await fetch(modelAsset.url).catch(() => null);
-  if (!r?.ok) r = await fetch(FALLBACK_MODEL_URL);
-  if (!r.ok) throw new Error(`Model download failed (${r.status})`);
-  const buf = await r.arrayBuffer();
-  db.transaction(STORE, "readwrite").objectStore(STORE).put(buf, MODEL_ID);
-  return new Uint8Array(buf);
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Stem asset download failed (${response.status})`);
+  const bytes = await response.arrayBuffer();
+  await writeCachedAsset(key, bytes);
+  return new Uint8Array(bytes);
+}
+
+async function loadModel(): Promise<Uint8Array> {
+  return loadAsset(MODEL_ID, modelAsset.url);
+}
+
+async function loadWasm(): Promise<Uint8Array> {
+  return loadAsset(WASM_ID, wasmAsset.url);
+}
+
+export async function stemAssetsReady(): Promise<boolean> {
+  if (typeof indexedDB === "undefined") return false;
+  try {
+    const [model, wasm] = await Promise.all([readCachedAsset(MODEL_ID), readCachedAsset(WASM_ID)]);
+    return hasOfflineStemAssets(Boolean(model), Boolean(wasm));
+  } catch {
+    return false;
+  }
+}
+
+/** Download and persist the model and engine before offline use. */
+export async function prepareStemAssets(): Promise<void> {
+  if (!stemsSupported()) throw new Error("Real stems require a browser with WebGPU support.");
+  modelBytes ??= loadModel().catch((error) => { modelBytes = null; throw error; });
+  wasmBytes ??= loadWasm().catch((error) => { wasmBytes = null; throw error; });
+  await Promise.all([modelBytes, wasmBytes]);
 }
 
 /** Separate a decoded track into drums/bass/other/vocals. Resolves null when unsupported. */
 export function separateStems(buffer: AudioBuffer): Promise<StemResult | null> {
-  if (!stemsSupported() || !isPro() || buffer.numberOfChannels > 2) return Promise.resolve(null);
+  if (!canRunStemSeparation({ hasWorker: typeof Worker !== "undefined", hasWebGpu: typeof navigator !== "undefined" && "gpu" in navigator, channels: buffer.numberOfChannels })) return Promise.resolve(null);
   const job = queue.then(async () => {
-    await ensureWorker();
     modelBytes ??= loadModel().catch((e) => { modelBytes = null; throw e; });
-    const bytes = await modelBytes;
+    wasmBytes ??= loadWasm().catch((e) => { wasmBytes = null; throw e; });
+    const [bytes, wasm] = await Promise.all([modelBytes, wasmBytes]);
+    await ensureWorker(wasm);
     const left = buffer.getChannelData(0).slice();
     const right = (buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0)).slice();
     const out = await send("separate", {
