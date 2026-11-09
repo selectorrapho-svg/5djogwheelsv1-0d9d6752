@@ -1,5 +1,10 @@
 # Task roadmap
 
+## Current request — real offline stems
+- [ ] Make existing four-stem AI separation available outside Pro
+- [ ] Add an explicit model download/cache control and accurate offline-ready status
+- [ ] Verify stem path and app build; document browser/GPU and first-download limits
+
 ## Current request — RGB detail and scratching
 - [x] Remove legacy waveform styles and retain full RGB colors
 - [x] Replace blurred strip scaling with zoom-aware sharp spectral envelopes
