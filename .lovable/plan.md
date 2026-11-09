@@ -1,5 +1,16 @@
 # DJog account, Studio and scratch upgrade
 
+## Real offline stems
+- Make the existing four-way AI source separation available in Free mode; do not relabel frequency filters as separated stems.
+- Add a preparation action that downloads and persistently caches the model and WASM engine, then make the app load both from local storage when offline.
+- Show readiness and processing limitations clearly; keep separation in a background worker and preserve playback while it runs.
+- Add focused tests for free-tier access and offline asset readiness behavior.
+
+### Technical details
+- Reuse `src/lib/dj/stems.ts`, `src/lib/dj/engine.ts`, and `StemsPanel`; keep the existing worker/WASM and four-stem output path.
+- Persist both model and WASM bytes in IndexedDB, await writes, and pass cached WASM bytes to the worker for initialization.
+- WebGPU remains a device requirement. First preparation requires downloading the approximately 96 MB model/runtime bundle; subsequently cached assets can be used offline.
+
 ## Accounts and Pro
 - Replace device-only account checks with secure Lovable Cloud accounts, profiles and separately assigned admin permissions.
 - Remember sign-ins and support the device password manager without storing readable passwords. Existing local accounts cannot establish admin authority or verified payment; use verified account creation/recovery instead.
