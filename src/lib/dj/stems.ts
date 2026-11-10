@@ -22,6 +22,12 @@ let queue: Promise<unknown> = Promise.resolve();
 let modelBytes: Promise<Uint8Array> | null = null;
 let wasmBytes: Promise<Uint8Array> | null = null;
 
+function asArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
+
 export function stemsSupported() {
   return typeof window !== "undefined" && canRunStemSeparation({
     hasWorker: typeof Worker !== "undefined",
@@ -41,7 +47,7 @@ function send(type: string, data: Record<string, unknown>, transfer: Transferabl
 
 function ensureWorker(wasm: Uint8Array, workerSource: Uint8Array) {
   if (ready) return ready;
-  const workerUrl = URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" }));
+  const workerUrl = URL.createObjectURL(new Blob([asArrayBuffer(workerSource)], { type: "text/javascript" }));
   worker = new Worker(workerUrl);
   worker.onmessage = (e) => {
     const { id, type, error } = e.data;
@@ -52,7 +58,7 @@ function ensureWorker(wasm: Uint8Array, workerSource: Uint8Array) {
     if (type === "error") p.rej(new Error(error));
     else p.res(e.data);
   };
-  const wasmUrl = URL.createObjectURL(new Blob([wasm], { type: "application/wasm" }));
+  const wasmUrl = URL.createObjectURL(new Blob([asArrayBuffer(wasm)], { type: "application/wasm" }));
   ready = send("init", { wasmUrl }).then(() => undefined).finally(() => {
     URL.revokeObjectURL(wasmUrl);
     URL.revokeObjectURL(workerUrl);
