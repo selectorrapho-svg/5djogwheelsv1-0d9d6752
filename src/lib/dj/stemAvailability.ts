@@ -8,6 +8,6 @@ export function canRunStemSeparation({ hasWorker, hasWebGpu, channels }: StemRun
   return hasWorker && hasWebGpu && channels > 0 && channels <= 2;
 }
 
-export function hasOfflineStemAssets(model: boolean, wasm: boolean) {
-  return model && wasm;
+export function hasOfflineStemAssets(model: boolean, wasm: boolean, worker: boolean) {
+  return model && wasm && worker;
 }

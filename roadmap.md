@@ -2,7 +2,7 @@
 
 ## Current request — real offline stems
 - [x] Make existing four-stem AI separation available outside Pro
-- [x] Add an explicit model download/cache control and accurate offline-ready status
+- [x] Add an explicit model download/cache control and accurate offline-ready status (weights, WASM, worker)
 - [ ] Verify stem path and app build; document browser/GPU and first-download limits
 
 ## Current request — RGB detail and scratching

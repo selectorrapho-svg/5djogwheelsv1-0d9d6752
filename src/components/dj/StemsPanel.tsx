@@ -53,7 +53,7 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
     }
   };
 
-  const actionLabel = preparing ? "Preparing…" : !offlineReady ? "Prepare offline · ~92 MB" : deck.realStems ? "AI stems ready offline" : !stemsSupported() ? "WebGPU unavailable" : "Separate this track";
+  const actionLabel = preparing ? "Preparing…" : !stemsSupported() ? "WebGPU unavailable" : !offlineReady ? "Prepare offline · ~92 MiB" : deck.realStems ? "AI stems ready offline" : "Separate this track";
   return (
     <div className={`stems-panel flex min-h-0 flex-col overflow-hidden border border-border bg-secondary ${inline ? "relative h-full" : "absolute inset-x-0 top-9 bottom-14 z-30"} rounded-md`}>
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1">
