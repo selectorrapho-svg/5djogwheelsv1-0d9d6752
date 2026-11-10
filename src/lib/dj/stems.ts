@@ -49,8 +49,8 @@ function ensureWorker(wasm: Uint8Array) {
     if (type === "error") p.rej(new Error(error));
     else p.res(e.data);
   };
-  const wasmCopy = wasm.slice();
-  ready = send("init", { wasmBytes: wasmCopy }, [wasmCopy.buffer]).then(() => undefined);
+  const wasmUrl = URL.createObjectURL(new Blob([wasm], { type: "application/wasm" }));
+  ready = send("init", { wasmUrl }).then(() => undefined).finally(() => URL.revokeObjectURL(wasmUrl));
   ready.catch(() => { ready = null; });
   return ready;
 }
@@ -69,7 +69,7 @@ function idb(): Promise<IDBDatabase> {
 async function readCachedAsset(key: string): Promise<ArrayBuffer | undefined> {
   const db = await idb();
   const cached = await new Promise<ArrayBuffer | undefined>((res) => {
-    const q = db.transaction(STORE).objectStore(STORE).get(MODEL_ID);
+    const q = db.transaction(STORE).objectStore(STORE).get(key);
     q.onsuccess = () => res(q.result);
     q.onerror = () => res(undefined);
   });
@@ -119,7 +119,9 @@ export async function stemAssetsReady(): Promise<boolean> {
 
 /** Download and persist the model and engine before offline use. */
 export async function prepareStemAssets(): Promise<void> {
-  if (!stemsSupported()) throw new Error("Real stems require a browser with WebGPU support.");
+  if (typeof Worker === "undefined" || typeof indexedDB === "undefined") {
+    throw new Error("This browser cannot store the offline stem model.");
+  }
   modelBytes ??= loadModel().catch((error) => { modelBytes = null; throw error; });
   wasmBytes ??= loadWasm().catch((error) => { wasmBytes = null; throw error; });
   await Promise.all([modelBytes, wasmBytes]);

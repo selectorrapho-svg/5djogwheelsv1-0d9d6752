@@ -4,6 +4,7 @@ import { canRunStemSeparation, hasOfflineStemAssets } from "./stemAvailability";
 describe("offline real stem availability", () => {
   it("allows the four-stem workflow without a Pro or account requirement", () => {
     expect(canRunStemSeparation({ hasWorker: true, hasWebGpu: true, channels: 2 })).toBe(true);
+    expect(canRunStemSeparation({ hasWorker: true, hasWebGpu: true, channels: 2 })).not.toBe(false);
   });
 
   it("requires both model weights and the local processing engine for offline use", () => {

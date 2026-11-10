@@ -30,3 +30,4 @@
 - Calculate spectral peaks in per-load browser workers and store them on the deck model, because analysis must not block decoded-track playback or run inside waveform rendering.
 - Streaming service selection is an availability-only library view until approved playback integrations exist, because consumer subscriptions do not grant DJ playback APIs.
 - Studio clips retain source audio with independent lane, stretch, pitch and reverse metadata; prepare transformed PCM in browser workers and share FX routing for playback/export, because editing must not block audio callbacks or change export timing.
+- Prepare genuine stem models explicitly, verify both cached assets by their own keys, and run separation from cached assets after preparation, because first-use downloads are large and offline readiness must be truthful.

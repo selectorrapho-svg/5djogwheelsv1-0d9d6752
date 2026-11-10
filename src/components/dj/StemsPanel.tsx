@@ -1,6 +1,6 @@
 import { Deck, type StemKey } from "@/lib/dj/engine";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDeck, useMixer } from "@/lib/dj/useMixer";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/mix4deejays-logo.jpg.asset.json";
@@ -9,6 +9,7 @@ import { useDjSettings } from "@/hooks/useDjSettings";
 import { Knob } from "./Knob";
 import { HotCuePanel } from "./HotCuePanel";
 import { SamplerPanel } from "./SamplerPanel";
+import { prepareStemAssets, stemAssetsReady, stemsSupported } from "@/lib/dj/stems";
 
 const STEMS: { key: StemKey; label: string }[] = [
   { key: "drums", label: "Drums" },
@@ -24,8 +25,35 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
   const [djs, setDjs] = useDjSettings();
   const [eq, setEqState] = useState({ filter: 0, high: 0, mid: 0, low: 0 });
   const [tab, setTab] = useState<"stems" | "cues" | "samples">("stems");
+  const [offlineReady, setOfflineReady] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [stemError, setStemError] = useState("");
   const eqMode = djs.stemsEqMode === "eq";
-  const status = deck.realStems ? "Separated stems" : deck.stemStatus === "loading" ? "Separating…" : deck.stemStatus === "locked" ? "AI stems · Pro" : "Frequency bands";
+  const status = deck.realStems ? "AI stems ready" : deck.stemStatus === "checking" ? "Checking offline model…" : deck.stemStatus === "loading" ? "Separating…" : deck.stemStatus === "needs-download" ? "Model not prepared" : deck.stemStatus === "unsupported" ? "WebGPU unavailable" : deck.stemStatus === "error" ? "Separation failed" : "Frequency bands";
+
+  useEffect(() => {
+    let mounted = true;
+    void stemAssetsReady().then((ready) => { if (mounted) setOfflineReady(ready); });
+    return () => { mounted = false; };
+  }, []);
+
+  const prepareOrSeparate = async () => {
+    setStemError("");
+    setPreparing(true);
+    try {
+      if (!offlineReady) {
+        await prepareStemAssets();
+        setOfflineReady(await stemAssetsReady());
+      }
+      await deck.separateLoadedStems();
+    } catch (error) {
+      setStemError(error instanceof Error ? error.message : "Could not prepare offline stems.");
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const actionLabel = preparing ? "Preparing…" : !offlineReady ? "Prepare offline · ~92 MB" : deck.realStems ? "AI stems ready offline" : !stemsSupported() ? "WebGPU unavailable" : "Separate this track";
   return (
     <div className={`stems-panel flex min-h-0 flex-col overflow-hidden border border-border bg-secondary ${inline ? "relative h-full" : "absolute inset-x-0 top-9 bottom-14 z-30"} rounded-md`}>
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-2 py-1">
@@ -43,6 +71,13 @@ export function StemsPanel({ deck, onClose, inline = false }: { deck: Deck; acce
       {tab === "samples" && <div className="p-2"><SamplerPanel mixer={mixer} inline /></div>}
       {tab === "stems" && <>
       <span role="status" className="px-2 pt-1 text-center text-[9px] text-muted-foreground">{eqMode ? `Deck ${deck.id} · EQ` : `Deck ${deck.id} · ${status}`}</span>
+      {!eqMode && <div className="flex shrink-0 flex-col items-center gap-0.5 px-2 pt-1">
+        <Button variant="outline" size="sm" className="h-7 px-2 text-[9px]" disabled={preparing || (offlineReady && (deck.realStems || !stemsSupported()))} onClick={() => void prepareOrSeparate()}>
+          {actionLabel}
+        </Button>
+        {!offlineReady && <span className="text-center text-[8px] text-muted-foreground">One-time download; then available offline.</span>}
+        {stemError && <span role="alert" className="text-center text-[8px] text-destructive">{stemError}</span>}
+      </div>}
       <div className="grid flex-1 grid-cols-4 place-items-center gap-1 px-1 py-2">
         {eqMode
           ? (["filter", "high", "mid", "low"] as const).map((b) => (
