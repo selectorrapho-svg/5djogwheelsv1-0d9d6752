@@ -7,6 +7,8 @@ import type { StemKey } from "./engine";
 
 const MODEL_ID = "htdemucs";
 const WASM_ID = "demucs-wasm";
+const WORKER_ID = "demucs-worker";
+const WORKER_URL = "/wasm/demucs/worker.js";
 const DB = "demucs-models";
 const STORE = "weights";
 
@@ -37,9 +39,10 @@ function send(type: string, data: Record<string, unknown>, transfer: Transferabl
   });
 }
 
-function ensureWorker(wasm: Uint8Array) {
+function ensureWorker(wasm: Uint8Array, workerSource: Uint8Array) {
   if (ready) return ready;
-  worker = new Worker("/wasm/demucs/worker.js");
+  const workerUrl = URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" }));
+  worker = new Worker(workerUrl);
   worker.onmessage = (e) => {
     const { id, type, error } = e.data;
     if (type === "progress") return;
@@ -49,9 +52,16 @@ function ensureWorker(wasm: Uint8Array) {
     if (type === "error") p.rej(new Error(error));
     else p.res(e.data);
   };
-  const wasmCopy = wasm.slice();
-  ready = send("init", { wasmBytes: wasmCopy }, [wasmCopy.buffer]).then(() => undefined);
-  ready.catch(() => { ready = null; });
+  const wasmUrl = URL.createObjectURL(new Blob([wasm], { type: "application/wasm" }));
+  ready = send("init", { wasmUrl }).then(() => undefined).finally(() => {
+    URL.revokeObjectURL(wasmUrl);
+    URL.revokeObjectURL(workerUrl);
+  });
+  ready.catch(() => {
+    ready = null;
+    worker?.terminate();
+    worker = null;
+  });
   return ready;
 }
 
@@ -69,7 +79,7 @@ function idb(): Promise<IDBDatabase> {
 async function readCachedAsset(key: string): Promise<ArrayBuffer | undefined> {
   const db = await idb();
   const cached = await new Promise<ArrayBuffer | undefined>((res) => {
-    const q = db.transaction(STORE).objectStore(STORE).get(MODEL_ID);
+    const q = db.transaction(STORE).objectStore(STORE).get(key);
     q.onsuccess = () => res(q.result);
     q.onerror = () => res(undefined);
   });
@@ -107,11 +117,19 @@ async function loadWasm(): Promise<Uint8Array> {
   return loadAsset(WASM_ID, wasmAsset.url);
 }
 
+async function loadWorker(): Promise<Uint8Array> {
+  return loadAsset(WORKER_ID, WORKER_URL);
+}
+
 export async function stemAssetsReady(): Promise<boolean> {
   if (typeof indexedDB === "undefined") return false;
   try {
-    const [model, wasm] = await Promise.all([readCachedAsset(MODEL_ID), readCachedAsset(WASM_ID)]);
-    return hasOfflineStemAssets(Boolean(model), Boolean(wasm));
+    const [model, wasm, workerScript] = await Promise.all([
+      readCachedAsset(MODEL_ID),
+      readCachedAsset(WASM_ID),
+      readCachedAsset(WORKER_ID),
+    ]);
+    return hasOfflineStemAssets(Boolean(model), Boolean(wasm), Boolean(workerScript));
   } catch {
     return false;
   }
@@ -119,9 +137,12 @@ export async function stemAssetsReady(): Promise<boolean> {
 
 /** Download and persist the model and engine before offline use. */
 export async function prepareStemAssets(): Promise<void> {
-  if (!stemsSupported()) throw new Error("Real stems require a browser with WebGPU support.");
+  if (typeof Worker === "undefined" || typeof indexedDB === "undefined") {
+    throw new Error("This browser cannot store the offline stem model.");
+  }
   modelBytes ??= loadModel().catch((error) => { modelBytes = null; throw error; });
   wasmBytes ??= loadWasm().catch((error) => { wasmBytes = null; throw error; });
+  await loadWorker();
   await Promise.all([modelBytes, wasmBytes]);
 }
 
@@ -131,8 +152,8 @@ export function separateStems(buffer: AudioBuffer): Promise<StemResult | null> {
   const job = queue.then(async () => {
     modelBytes ??= loadModel().catch((e) => { modelBytes = null; throw e; });
     wasmBytes ??= loadWasm().catch((e) => { wasmBytes = null; throw e; });
-    const [bytes, wasm] = await Promise.all([modelBytes, wasmBytes]);
-    await ensureWorker(wasm);
+    const [bytes, wasm, workerScript] = await Promise.all([modelBytes, wasmBytes, loadWorker()]);
+    await ensureWorker(wasm, workerScript);
     const left = buffer.getChannelData(0).slice();
     const right = (buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0)).slice();
     const out = await send("separate", {

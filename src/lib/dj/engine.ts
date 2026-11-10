@@ -8,8 +8,7 @@ import { crossfaderGains, freeSpinTau, DEFAULT_SCRATCH, type ScratchSettings, ty
 const scratchCfg = (): ScratchSettings => ({ ...DEFAULT_SCRATCH, ...((globalThis as { __djScratch?: Partial<ScratchSettings> }).__djScratch ?? {}) });
 import { analyzeTrackBeats } from "./beatAnalysis";
 import { DEFAULT_RECORDING, recordingProfile, type RecordingOptions } from "./recording";
-import { separateStems, stemsSupported } from "./stems";
-import { isPro } from "./license";
+import { separateStems, stemAssetsReady, stemsSupported } from "./stems";
 import { syncPitch, playbackPosition, phaseError as phaseCorrection } from "./sync";
 import { createKeyLock, lockedPitch } from "./keyLock";
 import type { SoundTouchNode } from "@soundtouchjs/audio-worklet";
@@ -229,7 +228,7 @@ export class Deck {
   firstBeat = 0;
   /** True once AI (Demucs) stems replace the frequency-band stems. */
   realStems = false;
-  stemStatus: "bands" | "loading" | "locked" | "unsupported" | "error" | "ready" = "bands";
+  stemStatus: "bands" | "checking" | "needs-download" | "loading" | "unsupported" | "error" | "ready" = "bands";
   private loadToken = 0;
   private gridRevision = 0;
   private stemSplitter: ChannelSplitterNode | null = null;
@@ -529,12 +528,43 @@ export class Deck {
         this.emit();
       }).catch(() => {});
     }, 0);
-    this.stemStatus = !isPro() ? "locked" : !stemsSupported() || buf.numberOfChannels > 2 ? "unsupported" : "loading";
-    void separateStems(buf).then((res) => {
+    this.stemStatus = "checking";
+    void stemAssetsReady().then((assetsReady) => {
       if (token !== this.loadToken) return;
-      if (!res) { if (this.stemStatus === "loading") this.stemStatus = "unsupported"; this.emit(); return; }
+      if (!assetsReady) {
+        this.stemStatus = "needs-download";
+        this.emit();
+        return;
+      }
+      void this.separateLoadedStems(token);
+    }).catch(() => {
+      if (token === this.loadToken) { this.stemStatus = "needs-download"; this.emit(); }
+    });
+  }
+
+  /** Run genuine four-stem separation for the current track after offline assets are prepared. */
+  async separateLoadedStems(expectedToken = this.loadToken) {
+    const buf = this.buffer;
+    if (!buf || expectedToken !== this.loadToken) return;
+    if (!stemsSupported() || buf.numberOfChannels > 2) {
+      this.stemStatus = "unsupported";
+      this.emit();
+      return;
+    }
+    this.stemStatus = "loading";
+    this.emit();
+    try {
+      const res = await separateStems(buf);
+      if (expectedToken !== this.loadToken) return;
+      if (!res) {
+        this.stemStatus = "unsupported";
+        this.emit();
+        return;
+      }
       this.applyRealStems(res);
-    }).catch(() => { if (token === this.loadToken) { this.stemStatus = "error"; this.emit(); } });
+    } catch {
+      if (expectedToken === this.loadToken) { this.stemStatus = "error"; this.emit(); }
+    }
   }
 
   private async analyzeWave(buf: AudioBuffer, token: number) {

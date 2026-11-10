@@ -7,9 +7,10 @@ describe("offline real stem availability", () => {
   });
 
   it("requires both model weights and the local processing engine for offline use", () => {
-    expect(hasOfflineStemAssets(true, true)).toBe(true);
-    expect(hasOfflineStemAssets(true, false)).toBe(false);
-    expect(hasOfflineStemAssets(false, true)).toBe(false);
+    expect(hasOfflineStemAssets(true, true, true)).toBe(true);
+    expect(hasOfflineStemAssets(true, true, false)).toBe(false);
+    expect(hasOfflineStemAssets(true, false, true)).toBe(false);
+    expect(hasOfflineStemAssets(false, true, true)).toBe(false);
   });
 
   it("only runs on supported stereo or mono browser audio", () => {
